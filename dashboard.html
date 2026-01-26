@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard</title>
+
+  <style>
+    :root {
+      --bg: #0b0c0f;
+      --card: #141622;
+      --muted: #9aa3b2;
+      --text: #e8eaf0;
+      --border: #24283a;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      padding: 22px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .clock { font-size: 20px; font-weight: 600; }
+    .date { font-size: 14px; color: var(--muted); }
+    .spacer { flex: 1; }
+
+    .search {
+      display: flex;
+      gap: 8px;
+      width: min(720px, 100%);
+    }
+
+    .search input {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0f111a;
+      color: var(--text);
+      outline: none;
+    }
+
+    .search button {
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    main {
+      padding: 0 22px 26px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(12, 1fr);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      min-height: 120px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .tiles {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    .tile {
+      display: block;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #0f111a;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .tileRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .favicon {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      flex: 0 0 22px;
+      background: #0b0c0f;
+      border: 1px solid var(--border);
+    }
+
+    .tileTitle {
+      font-weight: 600;
+    }
+
+    .tileMeta {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 12px;
+    }
+
+    .tile small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #0f111a;
+      color: var(--text);
+    }
+
+    input, select {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f111a;
+      color: var(--text);
+    }
+
+    .col-12 { grid-column: span 12; }
+    .col-7  { grid-column: span 7; }
+    .col-5  { grid-column: span 5; }
+    .col-6  { grid-column: span 6; }
+    .col-4  { grid-column: span 4; }
+
+    @media (max-width: 900px) {
+      .col-7, .col-5, .col-6 { grid-column: span 12; }
+      .tiles { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .scrollList {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .toggle {
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #0f111a;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.toggle:hover {
+  border-color: #3a3f5c;
+}
+
+/* Flashing animation for when the timer is up */
+    @keyframes timer-flash {
+      0% { background-color: var(--bg); }
+      50% { background-color: #ff4444; }
+      100% { background-color: var(--bg); }
+    }
+
+    .flashing-active {
+      animation: timer-flash 0.5s infinite !important;
+    }
+
+    #timerBtn.active {
+      color: #ff4444;
+      border-color: #ff4444;
+    }
+
+  </style>
+</head>
+
+<body>
+  <header>
+  <form class="search" id="searchForm">
+    <input id="q" placeholder="Search the web… or type a URL" />
+    <button type="submit">Go</button>
+  </form>
+
+  <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
+
+  <div class="spacer"></div>
+
+  <div>
+    <div class="clock" id="clock">--:--</div>
+    <div class="date" id="date">---</div>
+  </div>
+</header>
+
+  <main>
+    <!-- Right: Arena (replaces Today) -->
+    <section class="card col-6">
+      <h2>Arena</h2>
+      <iframe
+        src="cgi-bin/arena.py"
+        style="width: 100%; height: 300px; border: 1px solid var(--border); border-radius: var(--radius); background: #000;"
+      ></iframe>
+    </section>
+
+    <!-- Left: Quick Launch -->
+    <section class="card col-6">
+      <h2>Quick Launch</h2>
+      <div class="tiles" id="tiles"></div>
+    </section>
+
+    <section class="card col-4" id="gmail-widget">
+      <h2>Gmail</h2>
+      <div class="widget" id="gmail-widget">
+    <h3>Unread Gmail</h3>
+    <div id="gmail-count">Loading...</div>
+      </div>
+    </section>
+
+    <!-- Daily Check-in -->
+    <section class="card col-4" id="daily-checkin">
+      <h2>Daily check-in (yesterday)</h2>
+
+      <div class="tiles">
+        <button class="toggle" data-key="drink">🍺 Drank</button>
+        <button class="toggle" data-key="smoke">🚬 Smoked</button>
+        <button class="toggle" data-key="bad_sleep">😵 Bad sleep</button>
+        <button class="toggle" data-key="civ">🎮 Civ</button>
+    </div>
+
+  <div style="margin-top: 0.5rem;">
+    <button id="submit-checkin">Submit</button>
+    <span id="checkin-status"></span>
+  </div>
+</section>
+
+    <!-- Full-width: Bookmarks -->
+    <section class="card col-12">
+      <h2>Bookmarks</h2>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <input id="bmSearch" placeholder="Filter bookmarks…" style="flex:1; min-width:220px;">
+        <select id="bmSort">
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+        </select>
+      </div>
+
+      <ul id="bmList" class="scrollList"></ul>
+    </section>
+
+    <!-- Bottom: Notes + Recent Links -->
+    <section class="card col-7">
+      <h2>Notes</h2>
+      <textarea id="notes" placeholder="Scratchpad (autosaves locally)…"></textarea>
+    </section>
+
+    <section class="card col-5">
+      <h2>Recent Links</h2>
+      <ul id="recentLinks"></ul>
+    </section>
+  </main>
+
+  
+
+  <script>
+    /* ---------- CONFIG ---------- */
+
+    const TILES = [
+      // Media
+      { name: "BBC Sounds",  url: "https://www.bbc.co.uk/sounds",          note: "audio" },
+      { name: "Spotify",     url: "https://open.spotify.com",              note: "music" },
+      { name: "YouTube",     url: "https://www.youtube.com",               note: "video" },
+
+      // AI
+      { name: "Claude",      url: "https://claude.ai",                     note: "ai" },
+      { name: "Grok",        url: "https://grok.com",                      note: "ai" },
+      { name: "Perplexity",  url: "https://www.perplexity.ai",             note: "ai" },
+      { name: "DeepSeek",    url: "https://chat.deepseek.com",             note: "ai" },
+      { name: "ChatGPT",     url: "https://chatgpt.com",		   note: "ai" },
+
+      // Social / News / Reference
+      { name: "Facebook",    url: "https://www.facebook.com",              note: "social" },
+      { name: "Reddit",      url: "https://www.reddit.com",                note: "forums" },
+      { name: "Goodreads",   url: "https://www.goodreads.com",             note: "books" },
+      { name: "The Guardian",url: "https://www.theguardian.com",           note: "news" },
+      { name: "Wikipedia",   url: "https://en.wikipedia.org",              note: "reference" },
+      { name: "Google News", url: "https://news.google.com",               note: "headlines" },
+
+      // Banking
+      { name: "Co-op Bank",  url: "https://www.co-operativebank.co.uk",    note: "banking" },
+
+      // Google
+      { name: "Gmail",       url: "https://www.gmail.com",                 note: "email" },
+      { name: "Gemini",      url: "https://gemini.google.com/app",         note: "ai" },
+      { name: "GDrive",      url: "https://drive.google.com/drive/u/0/my-drive",  note: "files" }   
+  ]
+  
+
+    const RECENT = [
+      { label: "Unread Gmail", url: "https://mail.google.com/mail/u/0/#search/is%3Aunread" }
+    ];
+
+    /* ---------- QUICK LAUNCH ---------- */
+
+    function faviconFor(url) {
+      try {
+        const u = new URL(url);
+        return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`;
+      } catch {
+        return "";
+      }
+    }
+
+    document.getElementById("tiles").innerHTML =
+      TILES.map(t => {
+        const icon = faviconFor(t.url);
+        return `
+          <a class="tile" href="${t.url}" target="_blank" rel="noopener">
+            <div class="tileRow">
+              ${icon ? `<img class="favicon" src="${icon}" alt="" />` : ``}
+              <div>
+                <div class="tileTitle">${t.name}</div>
+                <div class="tileMeta">${t.note || ""}</div>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join("");
+
+    document.getElementById("recentLinks").innerHTML =
+      RECENT.map(r => `<li><a href="${r.url}">${r.label}</a></li>`).join("");
+
+    /*---------Latest Gmail Widget ----------*/
+
+    function updateGmailCount() {
+    fetch('cgi-bin/gmail_unread.py')
+        .then(response => response.json())
+        .then(data => {
+            const countElement = document.getElementById('gmail-count');
+            if (data.count !== undefined) {
+                countElement.innerText = data.count;
+                // Optional: Change color if there are unread emails
+                countElement.style.color = data.count > 0 ? "#ff4444" : "#ffffff";
+            } else {
+                countElement.innerText = "Error";
+            }
+        })
+        .catch(err => {
+            console.error('Gmail Fetch Error:', err);
+            document.getElementById('gmail-count').innerText = "Offline";
+        });
+}
+
+// Run once on load
+updateGmailCount();
+
+// Refresh every 10 minutes (300,000 milliseconds)
+setInterval(updateGmailCount, 600000);
+
+    /* ---------- BOOKMARKS WIDGET ---------- */
+
+    async function loadBookmarksWidget() {
+      const listEl = document.getElementById("bmList");
+      const searchEl = document.getElementById("bmSearch");
+      const sortEl = document.getElementById("bmSort");
+
+      let items = [];
+
+      try {
+        const html = await (await fetch("bookmarks.html")).text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        items = Array.from(doc.querySelectorAll("a")).map(a => ({
+          title: (a.textContent || "").trim(),
+          url: a.getAttribute("href") || ""
+        })).filter(x => x.title && x.url);
+      } catch {
+        listEl.innerHTML = "<li>Could not load bookmarks.html</li>";
+        return;
+      }
+
+      function render() {
+        const q = (searchEl.value || "").toLowerCase();
+        const mode = sortEl.value;
+
+        let filtered = items.filter(x =>
+          x.title.toLowerCase().includes(q) ||
+          x.url.toLowerCase().includes(q)
+        );
+
+        filtered.sort((a, b) => {
+          const cmp = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+          return mode === "za" ? -cmp : cmp;
+        });
+
+        listEl.innerHTML =
+          filtered.slice(0, 60).map(x =>
+            `<li><a href="${x.url}">${x.title}</a></li>`
+          ).join("") || "<li>No matches</li>";
+      }
+
+      searchEl.addEventListener("input", render);
+      sortEl.addEventListener("change", render);
+      render();
+    }
+
+    loadBookmarksWidget();
+
+    /* ---------- CLOCK ---------- */
+
+    function tick() {
+      const d = new Date();
+      document.getElementById("clock").textContent =
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      document.getElementById("date").textContent =
+        d.toLocaleDateString([], { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    /* ---------- NOTES ---------- */
+
+    const notes = document.getElementById("notes");
+    const KEY = "dashboard_notes";
+    notes.value = localStorage.getItem(KEY) || "";
+    notes.addEventListener("input", () => localStorage.setItem(KEY, notes.value));
+
+    /* ---------- SEARCH ---------- */
+
+    document.getElementById("searchForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const q = document.getElementById("q").value.trim();
+      if (!q) return;
+      const url = q.includes(".")
+        ? (q.startsWith("http") ? q : "https://" + q)
+        : "https://duckduckgo.com/?q=" + encodeURIComponent(q);
+      window.location.href = url;
+    });
+
+    /* ---------- TIMER LOGIC ---------- */
+    let timerInterval = null;
+    const timerBtn = document.getElementById('timerBtn');
+
+    timerBtn.addEventListener('click', () => {
+      // If flashing, click to stop and reset
+      if (document.body.classList.contains('flashing-active')) {
+        document.body.classList.remove('flashing-active');
+        timerBtn.textContent = "⏲ Set Timer";
+        timerBtn.classList.remove('active');
+        return;
+      }
+
+      // If already running, click to cancel
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerBtn.textContent = "⏲ Set Timer";
+        timerBtn.classList.remove('active');
+        return;
+      }
+
+      const input = prompt("Enter minutes (e.g. 10) or a 24h time (e.g. 15:30):");
+      if (!input) return;
+
+      let targetTime;
+      if (input.includes(':')) {
+        const [hrs, mins] = input.split(':').map(Number);
+        targetTime = new Date();
+        targetTime.setHours(hrs, mins, 0, 0);
+        if (targetTime < new Date()) targetTime.setDate(targetTime.getDate() + 1);
+      } else {
+        targetTime = new Date(Date.now() + parseInt(input) * 60000);
+      }
+
+      if (isNaN(targetTime)) return alert("Invalid input");
+
+      timerBtn.classList.add('active');
+      
+      timerInterval = setInterval(() => {
+        const now = new Date();
+        const diff = targetTime - now;
+
+        if (diff <= 0) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+          document.body.classList.add('flashing-active');
+          // Standard browser beep
+          const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+          audio.play().catch(() => {}); // Catch block in case browser blocks auto-play
+          timerBtn.textContent = "⚠️ STOP";
+        } else {
+          const remainingMins = Math.ceil(diff / 60000);
+          timerBtn.textContent = `⏳ ${remainingMins}m`;
+        }
+      }, 1000);
+    });
+    
+  </script>
+</body>
+</html>
