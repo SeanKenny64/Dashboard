@@ -1,1 +1,4 @@
 .env
+# Personal dashboard data
+data/
+dashboard_data.json

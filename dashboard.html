@@ -36,15 +36,26 @@
     .date { font-size: 14px; color: var(--muted); }
     .spacer { flex: 1; }
 
-    .search {
+    /* SEARCH STYLES */
+    .search-container {
       display: flex;
       gap: 8px;
-      width: min(720px, 100%);
+      width: min(640px, 100%);
     }
 
-    .search input {
+    .search-select {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #0f111a;
+      color: var(--text);
+      cursor: pointer;
+      outline: none;
+    }
+
+    #search-input {
       flex: 1;
-      padding: 12px 14px;
+      padding: 12px 18px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: #0f111a;
@@ -52,20 +63,24 @@
       outline: none;
     }
 
-    .search button {
-      padding: 12px 16px;
+    .search-container button {
+      padding: 12px 20px;
       border-radius: 999px;
       border: 1px solid var(--border);
       background: var(--card);
       color: var(--text);
       cursor: pointer;
+      font-weight: 600;
     }
 
+    /* MAIN LAYOUT */
     main {
       padding: 0 22px 26px;
-      display: grid;
+      display: flex;
+      flex-wrap: wrap;
       gap: 14px;
-      grid-template-columns: repeat(12, 1fr);
+      align-content: flex-start;
+      min-height: calc(100vh - 120px);
     }
 
     .card {
@@ -74,7 +89,22 @@
       border-radius: var(--radius);
       padding: 14px;
       min-height: 120px;
+      transition: all 0.3s ease;
+      flex: 1 0 300px;
+      max-width: calc(50% - 7px);
     }
+
+    .card[data-card="arena"],
+    .card[data-card="quick-launch"] { flex: 1 0 calc(50% - 7px); max-width: calc(50% - 7px); }
+
+    .card[data-card="gmail"],
+    .card[data-card="daily-checkin"] { flex: 1 0 calc(33.333% - 10px); max-width: calc(33.333% - 10px); }
+
+    .card[data-card="notes"] { flex: 2 0 400px; max-width: calc(66.666% - 7px); }
+
+    .card[data-card="recent-links"] { flex: 1 0 200px; max-width: calc(33.333% - 7px); }
+
+    .card[data-card="bookmarks"] { flex: 0 0 100%; max-width: 100%; }
 
     .card h2 {
       margin: 0 0 10px;
@@ -82,189 +112,121 @@
       letter-spacing: .4px;
       text-transform: uppercase;
       color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
     }
 
-    .tiles {
-      display: grid;
-      gap: 10px;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    }
-
-    .tile {
-      display: block;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: #0f111a;
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .tileRow {
+    /* MINIMIZE BUTTONS */
+    .minimize-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .favicon {
-      width: 22px;
-      height: 22px;
+      justify-content: center;
       border-radius: 6px;
-      flex: 0 0 22px;
-      background: #0b0c0f;
+      transition: 0.2s;
+    }
+
+    .minimize-btn:hover {
+      color: #ff4444; /* ADHD Visual Feedback: Red for close */
+      background: rgba(255, 68, 68, 0.1);
+    }
+
+    /* REST OF STYLES (Tiles, Toggles, etc) */
+    .restore-btn {
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
-    }
-
-    .tileTitle {
-      font-weight: 600;
-    }
-
-    .tileMeta {
       color: var(--muted);
-      margin-top: 4px;
+      cursor: pointer;
       font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-left: 8px;
     }
 
-    .tile small {
-      display: block;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .minimized-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .minimized-item { display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
+    .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .tile { display: block; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); text-decoration: none; }
+    .tileRow { display: flex; align-items: center; gap: 10px; }
+    .favicon { width: 22px; height: 22px; border-radius: 6px; flex: 0 0 22px; background: #0b0c0f; border: 1px solid var(--border); }
+    .tileTitle { font-weight: 600; }
+    .tileMeta { color: var(--muted); margin-top: 4px; font-size: 12px; }
+    textarea { width: 100%; min-height: 180px; resize: vertical; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); }
+    .toggle { padding: 16px; font-size: 16px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); cursor: pointer; }
+    .toggle.active { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
+    .scrollList { max-height: 260px; overflow-y: auto; padding-right: 10px; }
 
-    ul { margin: 0; padding-left: 18px; }
-    li { margin: 6px 0; }
+    @keyframes timer-flash { 0% { background-color: var(--bg); } 50% { background-color: #ff4444; } 100% { background-color: var(--bg); } }
+    .flashing-active { animation: timer-flash 0.5s infinite !important; }
 
-    textarea {
-      width: 100%;
-      min-height: 180px;
-      resize: vertical;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: #0f111a;
-      color: var(--text);
-    }
-
-    input, select {
-      padding: 8px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #0f111a;
-      color: var(--text);
-    }
-
-    .col-12 { grid-column: span 12; }
-    .col-7  { grid-column: span 7; }
-    .col-5  { grid-column: span 5; }
-    .col-6  { grid-column: span 6; }
-    .col-4  { grid-column: span 4; }
-
-    @media (max-width: 900px) {
-      .col-7, .col-5, .col-6 { grid-column: span 12; }
-      .tiles { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .scrollList {
-      max-height: 260px;
-      overflow-y: auto;
-      padding-right: 10px;
-    }
-
-    .toggle {
-  padding: 16px;
-  font-size: 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: #0f111a;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.toggle:hover {
-  border-color: #3a3f5c;
-}
-
-/* Flashing animation for when the timer is up */
-    @keyframes timer-flash {
-      0% { background-color: var(--bg); }
-      50% { background-color: #ff4444; }
-      100% { background-color: var(--bg); }
-    }
-
-    .flashing-active {
-      animation: timer-flash 0.5s infinite !important;
-    }
-
-    #timerBtn.active {
-      color: #ff4444;
-      border-color: #ff4444;
-    }
-
+    @media (max-width: 900px) { main { flex-direction: column; } .card { flex: 0 0 100% !important; } }
   </style>
 </head>
 
 <body>
   <header>
-  <form class="search" id="searchForm">
-    <input id="q" placeholder="Search the web… or type a URL" />
-    <button type="submit">Go</button>
-  </form>
+    <div class="search-container">
+      <select id="search-engine-selector" class="search-select">
+        <option value="https://duckduckgo.com/?q=">DDG</option>
+        <option value="https://google.com/search?q=">Google</option>
+        <option value="https://en.wikipedia.org/wiki/Special:Search?search=">Wiki</option>
+        <option value="https://web.archive.org/web/*/">Archive</option>
+      </select>
+      <input type="text" id="search-input" placeholder="Search or enter URL..." autocomplete="off">
+      <button onclick="executeSearch()">Go</button>
+    </div>
 
-  <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
-
-  <div class="spacer"></div>
-
-  <div>
-    <div class="clock" id="clock">--:--</div>
-    <div class="date" id="date">---</div>
-  </div>
-</header>
+    <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
+    <div class="spacer"></div>
+    <div>
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date">---</div>
+    </div>
+  </header>
 
   <main>
-    <!-- Right: Arena (replaces Today) -->
-    <section class="card col-6">
-      <h2>Arena</h2>
-      <iframe
-        src="cgi-bin/arena.py"
-        style="width: 100%; height: 300px; border: 1px solid var(--border); border-radius: var(--radius); background: #000;"
-      ></iframe>
+    <section class="card" data-card="arena">
+      <h2>Arena <button class="minimize-btn" data-card="arena"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
+      <iframe src="cgi-bin/arena.py" style="width: 100%; height: 300px; border: 1px solid var(--border); border-radius: var(--radius); background: #000;"></iframe>
     </section>
 
-    <!-- Left: Quick Launch -->
-    <section class="card col-6">
-      <h2>Quick Launch</h2>
+    <section class="card" data-card="quick-launch">
+      <h2>Quick Launch <button class="minimize-btn" data-card="quick-launch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <div class="tiles" id="tiles"></div>
     </section>
 
-    <section class="card col-4" id="gmail-widget">
-      <h2>Gmail</h2>
-      <div class="widget" id="gmail-widget">
-    <h3>Unread Gmail</h3>
-    <div id="gmail-count">Loading...</div>
-      </div>
+    <section class="card" data-card="gmail">
+      <h2>Gmail <button class="minimize-btn" data-card="gmail"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
+      <div id="gmail-count">Loading...</div>
     </section>
 
-    <!-- Daily Check-in -->
-    <section class="card col-4" id="daily-checkin">
-      <h2>Daily check-in (yesterday)</h2>
-
+    <section class="card" data-card="daily-checkin">
+      <h2>Daily Check-in <button class="minimize-btn" data-card="daily-checkin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <div class="tiles">
         <button class="toggle" data-key="drink">🍺 Drank</button>
         <button class="toggle" data-key="smoke">🚬 Smoked</button>
         <button class="toggle" data-key="bad_sleep">😵 Bad sleep</button>
         <button class="toggle" data-key="civ">🎮 Civ</button>
-    </div>
+      </div>
+      <div style="margin-top: 0.5rem;">
+        <button id="submit-checkin">Submit</button>
+        <span id="checkin-status"></span>
+      </div>
+    </section>
 
-  <div style="margin-top: 0.5rem;">
-    <button id="submit-checkin">Submit</button>
-    <span id="checkin-status"></span>
-  </div>
-</section>
+    <section class="card minimized-section" id="minimized-section" style="display: none;">
+      <h2>Minimized Panels <button class="restore-btn" id="restore-all">Restore All</button></h2>
+      <div class="minimized-list" id="minimized-list"></div>
+    </section>
 
-    <!-- Full-width: Bookmarks -->
-    <section class="card col-12">
-      <h2>Bookmarks</h2>
-
+    <section class="card bookmarks" data-card="bookmarks">
+      <h2>Bookmarks <button class="minimize-btn" data-card="bookmarks"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
         <input id="bmSearch" placeholder="Filter bookmarks…" style="flex:1; min-width:220px;">
         <select id="bmSort">
@@ -272,257 +234,207 @@
           <option value="za">Z → A</option>
         </select>
       </div>
-
       <ul id="bmList" class="scrollList"></ul>
     </section>
 
-    <!-- Bottom: Notes + Recent Links -->
-    <section class="card col-7">
-      <h2>Notes</h2>
+    <section class="card" data-card="notes">
+      <h2>Notes <button class="minimize-btn" data-card="notes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <textarea id="notes" placeholder="Scratchpad (autosaves locally)…"></textarea>
     </section>
 
-    <section class="card col-5">
-      <h2>Recent Links</h2>
+    <section class="card" data-card="recent-links">
+      <h2>Recent Links <button class="minimize-btn" data-card="recent-links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <ul id="recentLinks"></ul>
     </section>
   </main>
 
-  
-
   <script>
-    /* ---------- CONFIG ---------- */
-
-    const TILES = [
-      // Media
-      { name: "BBC Sounds",  url: "https://www.bbc.co.uk/sounds",          note: "audio" },
-      { name: "Spotify",     url: "https://open.spotify.com",              note: "music" },
-      { name: "YouTube",     url: "https://www.youtube.com",               note: "video" },
-
-      // AI
-      { name: "Claude",      url: "https://claude.ai",                     note: "ai" },
-      { name: "Grok",        url: "https://grok.com",                      note: "ai" },
-      { name: "Perplexity",  url: "https://www.perplexity.ai",             note: "ai" },
-      { name: "DeepSeek",    url: "https://chat.deepseek.com",             note: "ai" },
-      { name: "ChatGPT",     url: "https://chatgpt.com",		   note: "ai" },
-
-      // Social / News / Reference
-      { name: "Facebook",    url: "https://www.facebook.com",              note: "social" },
-      { name: "Reddit",      url: "https://www.reddit.com",                note: "forums" },
-      { name: "Goodreads",   url: "https://www.goodreads.com",             note: "books" },
-      { name: "The Guardian",url: "https://www.theguardian.com",           note: "news" },
-      { name: "Wikipedia",   url: "https://en.wikipedia.org",              note: "reference" },
-      { name: "Google News", url: "https://news.google.com",               note: "headlines" },
-
-      // Banking
-      { name: "Co-op Bank",  url: "https://www.co-operativebank.co.uk",    note: "banking" },
-
-      // Google
-      { name: "Gmail",       url: "https://www.gmail.com",                 note: "email" },
-      { name: "Gemini",      url: "https://gemini.google.com/app",         note: "ai" },
-      { name: "GDrive",      url: "https://drive.google.com/drive/u/0/my-drive",  note: "files" }   
-  ]
-  
-
-    const RECENT = [
-      { label: "Unread Gmail", url: "https://mail.google.com/mail/u/0/#search/is%3Aunread" }
-    ];
-
-    /* ---------- QUICK LAUNCH ---------- */
-
-    function faviconFor(url) {
-      try {
-        const u = new URL(url);
-        return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`;
-      } catch {
-        return "";
-      }
-    }
-
-    document.getElementById("tiles").innerHTML =
-      TILES.map(t => {
-        const icon = faviconFor(t.url);
-        return `
-          <a class="tile" href="${t.url}" target="_blank" rel="noopener">
-            <div class="tileRow">
-              ${icon ? `<img class="favicon" src="${icon}" alt="" />` : ``}
-              <div>
-                <div class="tileTitle">${t.name}</div>
-                <div class="tileMeta">${t.note || ""}</div>
-              </div>
-            </div>
-          </a>
-        `;
-      }).join("");
-
-    document.getElementById("recentLinks").innerHTML =
-      RECENT.map(r => `<li><a href="${r.url}">${r.label}</a></li>`).join("");
-
-    /*---------Latest Gmail Widget ----------*/
-
-    function updateGmailCount() {
-    fetch('cgi-bin/gmail_unread.py')
-        .then(response => response.json())
-        .then(data => {
-            const countElement = document.getElementById('gmail-count');
-            if (data.count !== undefined) {
-                countElement.innerText = data.count;
-                // Optional: Change color if there are unread emails
-                countElement.style.color = data.count > 0 ? "#ff4444" : "#ffffff";
-            } else {
-                countElement.innerText = "Error";
-            }
-        })
-        .catch(err => {
-            console.error('Gmail Fetch Error:', err);
-            document.getElementById('gmail-count').innerText = "Offline";
-        });
-}
-
-// Run once on load
-updateGmailCount();
-
-// Refresh every 10 minutes (300,000 milliseconds)
-setInterval(updateGmailCount, 600000);
-
-    /* ---------- BOOKMARKS WIDGET ---------- */
-
-    async function loadBookmarksWidget() {
-      const listEl = document.getElementById("bmList");
-      const searchEl = document.getElementById("bmSearch");
-      const sortEl = document.getElementById("bmSort");
-
-      let items = [];
-
-      try {
-        const html = await (await fetch("bookmarks.html")).text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-
-        items = Array.from(doc.querySelectorAll("a")).map(a => ({
-          title: (a.textContent || "").trim(),
-          url: a.getAttribute("href") || ""
-        })).filter(x => x.title && x.url);
-      } catch {
-        listEl.innerHTML = "<li>Could not load bookmarks.html</li>";
-        return;
-      }
-
-      function render() {
-        const q = (searchEl.value || "").toLowerCase();
-        const mode = sortEl.value;
-
-        let filtered = items.filter(x =>
-          x.title.toLowerCase().includes(q) ||
-          x.url.toLowerCase().includes(q)
-        );
-
-        filtered.sort((a, b) => {
-          const cmp = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
-          return mode === "za" ? -cmp : cmp;
-        });
-
-        listEl.innerHTML =
-          filtered.slice(0, 60).map(x =>
-            `<li><a href="${x.url}">${x.title}</a></li>`
-          ).join("") || "<li>No matches</li>";
-      }
-
-      searchEl.addEventListener("input", render);
-      sortEl.addEventListener("change", render);
-      render();
-    }
-
-    loadBookmarksWidget();
-
-    /* ---------- CLOCK ---------- */
-
-    function tick() {
-      const d = new Date();
-      document.getElementById("clock").textContent =
-        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      document.getElementById("date").textContent =
-        d.toLocaleDateString([], { weekday: "long", year: "numeric", month: "short", day: "numeric" });
-    }
-    tick();
-    setInterval(tick, 1000);
-
-    /* ---------- NOTES ---------- */
-
-    const notes = document.getElementById("notes");
-    const KEY = "dashboard_notes";
-    notes.value = localStorage.getItem(KEY) || "";
-    notes.addEventListener("input", () => localStorage.setItem(KEY, notes.value));
-
-    /* ---------- SEARCH ---------- */
-
-    document.getElementById("searchForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const q = document.getElementById("q").value.trim();
-      if (!q) return;
-      const url = q.includes(".")
-        ? (q.startsWith("http") ? q : "https://" + q)
-        : "https://duckduckgo.com/?q=" + encodeURIComponent(q);
-      window.location.href = url;
-    });
-
-    /* ---------- TIMER LOGIC ---------- */
-    let timerInterval = null;
-    const timerBtn = document.getElementById('timerBtn');
-
-    timerBtn.addEventListener('click', () => {
-      // If flashing, click to stop and reset
-      if (document.body.classList.contains('flashing-active')) {
-        document.body.classList.remove('flashing-active');
-        timerBtn.textContent = "⏲ Set Timer";
-        timerBtn.classList.remove('active');
-        return;
-      }
-
-      // If already running, click to cancel
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerBtn.textContent = "⏲ Set Timer";
-        timerBtn.classList.remove('active');
-        return;
-      }
-
-      const input = prompt("Enter minutes (e.g. 10) or a 24h time (e.g. 15:30):");
+    /* ---------- SEARCH LOGIC ---------- */
+    function executeSearch() {
+      const input = document.getElementById('search-input').value.trim();
+      const engineBase = document.getElementById('search-engine-selector').value;
       if (!input) return;
 
-      let targetTime;
-      if (input.includes(':')) {
-        const [hrs, mins] = input.split(':').map(Number);
-        targetTime = new Date();
-        targetTime.setHours(hrs, mins, 0, 0);
-        if (targetTime < new Date()) targetTime.setDate(targetTime.getDate() + 1);
+      // URL detection: if it has a dot and no spaces
+      if (input.includes('.') && !input.includes(' ')) {
+        let url = input.startsWith('http') ? input : 'https://' + input;
+        window.open(url, '_blank');
       } else {
-        targetTime = new Date(Date.now() + parseInt(input) * 60000);
+        // Search using selected engine
+        window.open(engineBase + encodeURIComponent(input), '_blank');
       }
+    }
 
-      if (isNaN(targetTime)) return alert("Invalid input");
+    // Enter key support for search
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') executeSearch();
+    });
 
-      timerBtn.classList.add('active');
+    /* ---------- MINIMIZE & RESTORE ---------- */
+    let minimizedPanels = JSON.parse(localStorage.getItem('minimizedPanels') || '{}');
+
+    function updateMinimizedSection() {
+      const section = document.getElementById('minimized-section');
+      const list = document.getElementById('minimized-list');
+      const current = Object.keys(minimizedPanels).filter(id => minimizedPanels[id]);
       
-      timerInterval = setInterval(() => {
-        const now = new Date();
-        const diff = targetTime - now;
+      section.style.display = current.length > 0 ? 'block' : 'none';
+      list.innerHTML = current.map(id => `
+        <div class="minimized-item">
+          ${id.charAt(0).toUpperCase() + id.slice(1)}
+          <button class="restore-btn" onclick="restorePanel('${id}')">Restore</button>
+        </div>
+      `).join('');
+    }
 
+    function minimizePanel(id) {
+      const el = document.querySelector(`[data-card="${id}"]`);
+      if (el) {
+        el.style.display = 'none';
+        minimizedPanels[id] = true;
+        localStorage.setItem('minimizedPanels', JSON.stringify(minimizedPanels));
+        updateMinimizedSection();
+      }
+    }
+
+    function restorePanel(id) {
+      const el = document.querySelector(`[data-card="${id}"]`);
+      if (el) {
+        el.style.display = 'block';
+        minimizedPanels[id] = false;
+        localStorage.setItem('minimizedPanels', JSON.stringify(minimizedPanels));
+        updateMinimizedSection();
+      }
+    }
+
+    document.getElementById('restore-all').onclick = () => {
+      Object.keys(minimizedPanels).forEach(id => restorePanel(id));
+    };
+
+    // Attach listeners to minimize buttons
+    document.querySelectorAll('.minimize-btn').forEach(btn => {
+      btn.onclick = () => minimizePanel(btn.getAttribute('data-card'));
+    });
+
+    /* ---------- TILES & BOOKMARKS ---------- */
+    const TILES = [
+      { name: "ChatGPT", url: "https://chatgpt.com", note: "ai" },
+      { name: "Gemini", url: "https://gemini.google.com/app", note: "ai" },
+      { name: "Claude", url: "https://claude.ai", note: "ai" },
+      { name: "DeepSeek", url: "https://chat.deepseek.com", note: "ai" },
+      { name: "Grok", url: "https://grok.com", note: "ai" },
+      { name: "Google News", url: "https://news.google.com/", note :"news" },
+      { name: "BBC Sounds", url: "https://www.bbc.co.uk/sounds", note: "audio" },
+      { name: "Spotify", url: "https://open.spotify.com", note: "music" },
+      { name: "YouTube", url: "https://www.youtube.com", note: "video" },
+      { name: "Facebook", url: "https://www.facebook.com", note: "social" },
+      { name: "Reddit", url: "https://www.reddit.com", note: "forums" },
+      { name: "Goodreads", url: "https://www.goodreads.com", note: "books" },
+      { name: "The Guardian", url: "https://www.theguardian.com", note: "news" },
+      { name: "Wikipedia", url: "https://en.wikipedia.org", note: "reference" },
+      { name: "Co-op Bank", url: "https://www.co-operativebank.co.uk", note: "banking" },
+      { name: "Gmail", url: "https://www.gmail.com", note: "email" },
+      { name: "GDrive", url: "https://drive.google.com/drive/u/0/my-drive", note: "files" }   
+    ];
+
+    function faviconFor(url) {
+      try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`; } catch { return ""; }
+    }
+
+    document.getElementById("tiles").innerHTML = TILES.map(t => `
+      <a class="tile" href="${t.url}" target="_blank">
+        <div class="tileRow">
+          <img class="favicon" src="${faviconFor(t.url)}" alt="" />
+          <div><div class="tileTitle">${t.name}</div><div class="tileMeta">${t.note}</div></div>
+        </div>
+      </a>`).join("");
+
+    /* ---------- CORE UTILITIES ---------- */
+    function tick() {
+      const d = new Date();
+      document.getElementById("clock").textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      document.getElementById("date").textContent = d.toLocaleDateString([], { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+    }
+    setInterval(tick, 1000); tick();
+
+    /* ---------- GMAIL UNREAD COUNT ---------- */
+async function fetchGmailCount() {
+  try {
+    const response = await fetch('cgi-bin/gmail_unread.py');
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    
+    const data = await response.json();
+    const gmailDiv = document.getElementById('gmail-count');
+    
+    if (data.error) {
+      gmailDiv.innerHTML = `<span style="color: #ff4444;">Error: ${data.error}</span>`;
+    } else {
+      const count = data.count || 0;
+      if (count === 0) {
+        gmailDiv.innerHTML = '📭 No unread emails';
+      } else if (count === 1) {
+        gmailDiv.innerHTML = '📨 1 unread email';
+      } else {
+        gmailDiv.innerHTML = `📨 ${count} unread emails`;
+      }
+      
+      // Make it clickable to open Gmail
+      gmailDiv.style.cursor = 'pointer';
+      gmailDiv.onclick = () => window.open('https://mail.google.com', '_blank');
+    }
+  } catch (error) {
+    console.error('Gmail fetch error:', error);
+    document.getElementById('gmail-count').innerHTML = 
+      `<span style="color: #ff4444;">Failed to load</span>`;
+  }
+}
+
+// Call it on page load and refresh every 5 minutes
+fetchGmailCount();
+setInterval(fetchGmailCount, 300000); // 5 minutes
+
+    const notes = document.getElementById("notes");
+    notes.value = localStorage.getItem("dashboard_notes") || "";
+    notes.oninput = () => localStorage.setItem("dashboard_notes", notes.value);
+
+    // Initial minimized state check
+    window.onload = () => {
+      Object.keys(minimizedPanels).forEach(id => { if(minimizedPanels[id]) minimizePanel(id); });
+      updateMinimizedSection();
+    };
+
+    /* ---------- TIMER ---------- */
+    let timerInterval = null;
+    document.getElementById('timerBtn').onclick = function() {
+      if (document.body.classList.contains('flashing-active')) {
+        document.body.classList.remove('flashing-active');
+        this.textContent = "⏲ Set Timer";
+        return;
+      }
+      const input = prompt("Minutes (e.g. 10) or Time (e.g. 15:30):");
+      if (!input) return;
+      let target = input.includes(':') ? new Date().setHours(...input.split(':')) : Date.now() + input * 60000;
+      this.classList.add('active');
+      timerInterval = setInterval(() => {
+        let diff = target - Date.now();
         if (diff <= 0) {
           clearInterval(timerInterval);
-          timerInterval = null;
           document.body.classList.add('flashing-active');
-          // Standard browser beep
-          const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-          audio.play().catch(() => {}); // Catch block in case browser blocks auto-play
-          timerBtn.textContent = "⚠️ STOP";
+          this.textContent = "⚠️ STOP";
         } else {
-          const remainingMins = Math.ceil(diff / 60000);
-          timerBtn.textContent = `⏳ ${remainingMins}m`;
+          this.textContent = `⏳ ${Math.ceil(diff/60000)}m`;
         }
       }, 1000);
+    };
+
+    /* ---------- CHECK-IN ---------- */
+    document.querySelectorAll('.toggle[data-key]').forEach(btn => {
+      btn.onclick = () => btn.classList.toggle('active');
     });
-    
+    document.getElementById('submit-checkin').onclick = () => {
+      const keys = Array.from(document.querySelectorAll('.toggle.active[data-key]')).map(b => b.dataset.key);
+      document.getElementById('checkin-status').textContent = "Saved: " + keys.join(', ');
+    };
   </script>
 </body>
 </html>

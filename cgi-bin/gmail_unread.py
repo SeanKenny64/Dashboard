@@ -5,7 +5,7 @@ import json     # Required to format the data for your dashboard
 from dotenv import load_dotenv # Required to load the .env file
 
 # 1. Load the hidden environment variables
-load_dotenv("/home/sean/Tools/dashboard/.env")
+load_dotenv("/home/sean/Projects/dashboard/.env")
 
 # 2. Get credentials from .env (no longer hardcoded for security)
 GMAIL_USER = os.getenv("GMAIL_USER")
