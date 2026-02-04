@@ -393,9 +393,105 @@ async function fetchGmailCount() {
 fetchGmailCount();
 setInterval(fetchGmailCount, 300000); // 5 minutes
 
+        /* ---------- SERVER-SYNCED NOTES ---------- */
     const notes = document.getElementById("notes");
-    notes.value = localStorage.getItem("dashboard_notes") || "";
-    notes.oninput = () => localStorage.setItem("dashboard_notes", notes.value);
+    let isSaving = false;
+    let lastServerNotes = "";
+
+    // 1. Load notes from server when page opens
+    async function loadNotesFromServer() {
+      try {
+        console.log("Loading notes from server...");
+        const response = await fetch('/api/data');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const data = await response.json();
+        lastServerNotes = data.notes || "";
+        
+        // Only update if user isn't currently typing
+        if (document.activeElement !== notes || notes.value === "") {
+          notes.value = lastServerNotes;
+        }
+        
+        console.log("Notes loaded from server");
+      } catch (error) {
+        console.error("Failed to load notes:", error);
+        // Fallback to localStorage
+        notes.value = localStorage.getItem("dashboard_notes") || "";
+      }
+    }
+
+    // 2. Save notes to server (with delay)
+    let saveTimeout = null;
+    notes.oninput = () => {
+      // Clear any pending save
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      
+      // Save after 2 seconds of no typing
+      saveTimeout = setTimeout(async () => {
+        if (isSaving) return;
+        
+        isSaving = true;
+        try {
+          await fetch('/api/save-notes', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              notes: notes.value
+            })
+          });
+          lastServerNotes = notes.value;
+          console.log("Notes saved to server");
+          
+          // Also save to localStorage as backup
+          localStorage.setItem("dashboard_notes", notes.value);
+        } catch (error) {
+          console.error("Failed to save:", error);
+          // Fallback to localStorage only
+          localStorage.setItem("dashboard_notes", notes.value);
+        } finally {
+          isSaving = false;
+        }
+      }, 2000); // 2 second delay
+    };
+
+    // 3. Check for updates from other devices every 10 seconds
+    async function checkForNoteUpdates() {
+      if (isSaving) return;
+      
+      try {
+        const response = await fetch(`/api/data?t=${Date.now()}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const serverNotes = data.notes || "";
+        
+        // Update if notes changed AND we're not currently typing in notes
+        if (serverNotes !== lastServerNotes && 
+            serverNotes !== notes.value && 
+            document.activeElement !== notes) {
+          
+          console.log("Updating notes from other device...");
+          notes.value = serverNotes;
+          lastServerNotes = serverNotes;
+          
+          // Also update localStorage
+          localStorage.setItem("dashboard_notes", serverNotes);
+        }
+      } catch (error) {
+        // Silent fail - we'll try again next time
+      }
+    }
+
+    // Start checking for updates
+    setInterval(checkForNoteUpdates, 10000); // Every 10 seconds
+
+    // Load notes when page loads
+    window.addEventListener('DOMContentLoaded', loadNotesFromServer);
 
     // Initial minimized state check
     window.onload = () => {
