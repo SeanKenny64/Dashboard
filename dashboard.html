@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -102,7 +103,7 @@
 
     .card[data-card="notes"] { flex: 2 0 400px; max-width: calc(66.666% - 7px); }
 
-    .card[data-card="recent-links"] { flex: 1 0 200px; max-width: calc(33.333% - 7px); }
+    .card[data-card="recent-links"] { flex: 1 0 200px; max-width: calc(33.333% - 10px); }
 
     .card[data-card="bookmarks"] { flex: 0 0 100%; max-width: 100%; }
 
@@ -135,6 +136,80 @@
     .minimize-btn:hover {
       color: #ff4444; /* ADHD Visual Feedback: Red for close */
       background: rgba(255, 68, 68, 0.1);
+    }
+
+    /* TERMINAL STYLES */
+    .terminal-container {
+      margin-top: 10px;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .terminal-output {
+      height: 60px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+      color: #0f0;
+      line-height: 1.4;
+    }
+
+    .terminal-output::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .terminal-output::-webkit-scrollbar-track {
+      background: #0b0c0f;
+    }
+
+    .terminal-output::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
+    .terminal-line {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .terminal-prompt {
+      color: #0f0;
+    }
+
+    .terminal-error {
+      color: #ff4444;
+    }
+
+    .terminal-success {
+      color: #4CAF50;
+    }
+
+    .terminal-input-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .terminal-input-container::before {
+      content: '>';
+      color: #0f0;
+    }
+
+    #terminal-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+
+    #terminal-input::placeholder {
+      color: #333;
     }
 
     /* REST OF STYLES (Tiles, Toggles, etc) */
@@ -192,8 +267,19 @@
 
   <main>
     <section class="card" data-card="arena">
-      <h2>Arena <button class="minimize-btn" data-card="arena"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
-      <iframe src="cgi-bin/arena.py" style="width: 100%; height: 300px; border: 1px solid var(--border); border-radius: var(--radius); background: #000;"></iframe>
+      <h2>Arena 
+        <button id="refresh-arena-btn" style="margin-left: 8px; padding: 4px 10px; font-size: 11px; background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; color: #4CAF50; border-radius: 6px; cursor: pointer; transition: 0.2s;">↻ Refresh</button>
+        <button class="minimize-btn" data-card="arena"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </h2>
+      <iframe id="arena-iframe" src="cgi-bin/arena.py" style="width: 100%; height: 300px; border: 1px solid var(--border); border-radius: var(--radius); background: #000;"></iframe>
+      
+      <!-- TERMINAL - ONLY NEW ADDITION -->
+      <div class="terminal-container">
+        <div class="terminal-output" id="terminal-output"></div>
+        <div class="terminal-input-container">
+          <input type="text" id="terminal-input" placeholder="td 5" autocomplete="off">
+        </div>
+      </div>
     </section>
 
     <section class="card" data-card="quick-launch">
@@ -268,6 +354,99 @@
     // Enter key support for search
     document.getElementById('search-input').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') executeSearch();
+    });
+
+    /* ---------- TERMINAL - ONLY NEW JAVASCRIPT ---------- */
+    const terminalOutput = document.getElementById('terminal-output');
+    const terminalInput = document.getElementById('terminal-input');
+    const terminalHistory = [];
+    let historyIndex = -1;
+
+    // Function to refresh arena iframe
+    function refreshArena() {
+      const arenaIframe = document.getElementById('arena-iframe');
+      if (arenaIframe) {
+        arenaIframe.src = arenaIframe.src;
+      }
+    }
+
+    // Attach refresh button handler
+    document.getElementById('refresh-arena-btn').addEventListener('click', refreshArena);
+
+    function addTerminalLine(text, className = '') {
+      const line = document.createElement('div');
+      line.className = 'terminal-line ' + className;
+      line.textContent = text;
+      terminalOutput.appendChild(line);
+      terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+      // Keep only last 50 lines
+      while (terminalOutput.children.length > 50) {
+        terminalOutput.removeChild(terminalOutput.firstChild);
+      }
+    }
+
+    async function executeTerminalCommand(cmd) {
+      if (!cmd.trim()) return;
+
+      addTerminalLine('> ' + cmd, 'terminal-prompt');
+      terminalHistory.push(cmd);
+      historyIndex = terminalHistory.length;
+
+      try {
+        const response = await fetch('cgi-bin/terminal_exec.py', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'command=' + encodeURIComponent(cmd)
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          addTerminalLine(data.error, 'terminal-error');
+        } else {
+          const output = data.stdout || data.stderr || '';
+          if (output) {
+            output.split('\n').forEach(line => {
+              if (line.trim()) {
+                addTerminalLine(line, data.stderr ? 'terminal-error' : 'terminal-success');
+              }
+            });
+          }
+          
+          // Auto-refresh arena after task commands
+          if (cmd.startsWith('td ') || cmd.startsWith('ta ') || cmd.startsWith('t ') || cmd.startsWith('task ') || cmd.startsWith('tm ') || cmd.startsWith('arena')) {
+            refreshArena();
+          }
+        }
+      } catch (error) {
+        addTerminalLine('Error: ' + error.message, 'terminal-error');
+      }
+    }
+
+    terminalInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeTerminalCommand(terminalInput.value);
+        terminalInput.value = '';
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          historyIndex--;
+          terminalInput.value = terminalHistory[historyIndex];
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex < terminalHistory.length - 1) {
+          historyIndex++;
+          terminalInput.value = terminalHistory[historyIndex];
+        } else {
+          historyIndex = terminalHistory.length;
+          terminalInput.value = '';
+        }
+      }
     });
 
     /* ---------- MINIMIZE & RESTORE ---------- */
