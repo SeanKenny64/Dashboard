@@ -11,7 +11,7 @@ class HybridHandler(CGIHTTPRequestHandler):
     cgi_directories = ['/cgi-bin']
     
     # Whitelist of allowed commands
-    ALLOWED_COMMANDS = ['td', 'ta', 't', 'task', 'tl', 'tn', 'arena']
+    ALLOWED_COMMANDS = ['td', 'ta', 't', 'task', 'tl', 'tn', 'tm', 'tdel', 'arena']
     
     def execute_terminal_command(self, command):
         """Execute a whitelisted terminal command"""
@@ -28,14 +28,20 @@ class HybridHandler(CGIHTTPRequestHandler):
             
             # Execute command with bash and define TaskWarrior aliases inline
             # (.bashrc exits early for non-interactive shells, so we define aliases directly)
+            # Note: We can't easily add rc.confirmation=no to 't' alias since the subcommand comes after
+            # So we use tdel for confirmed deletes, and auto-confirm via 'yes |' for interactive prompts
             aliases = """
 shopt -s expand_aliases
 alias tm='task modify'
 alias ta='task add'
 alias td='task done'
 alias t='task'
+alias tdel='task delete'
 """
-            full_command = f'{aliases}\n{command}'
+            # Execute command with bash and define TaskWarrior aliases inline
+            # Append rc.confirmation=no to skip all prompts
+            full_command = f'{aliases}\n{command} rc.confirmation=no'
+            
             result = subprocess.run(
                 full_command,
                 shell=True,
