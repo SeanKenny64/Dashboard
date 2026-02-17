@@ -38,40 +38,95 @@
     .spacer { flex: 1; }
 
     /* SEARCH STYLES */
+    /* SEARCH STYLES - PATCHED */
+   /* SEARCH STYLES - CLEANED */
+/* SEARCH STYLES - ICON + TEXT VERSION */
     .search-container {
       display: flex;
-      gap: 8px;
-      width: min(640px, 100%);
-    }
-
-    .search-select {
-      padding: 10px;
-      border-radius: 12px;
+      flex-direction: row-reverse; 
+      align-items: center;
+      background: var(--card);
       border: 1px solid var(--border);
-      background: #0f111a;
-      color: var(--text);
-      cursor: pointer;
-      outline: none;
+      border-radius: 12px;
+      overflow: hidden;
+      width: min(600px, 100%);
+      height: 46px;
     }
 
     #search-input {
       flex: 1;
-      padding: 12px 18px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #0f111a;
+      background: transparent;
+      border: none !important;
       color: var(--text);
+      padding: 0 16px;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .search-select {
+      width: 140px; /* Wider to fit both Icon and Text */
+      height: 100%;
+      border: none !important;
+      border-left: 1px solid var(--border) !important; /* Single clean divider */
+      background: transparent no-repeat;
+      background-image: url('https://www.google.com/s2/favicons?domain=google.com&sz=32');
+      background-position: 10px center; /* Icon on the left */
+      background-size: 18px;
+      color: var(--text); /* Text is now visible */
+      padding-left: 35px; /* Pushes text to the right of the icon */
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      font-size: 14px;
       outline: none;
     }
 
-    .search-container button {
-      padding: 12px 20px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
+        /* THE ICON MAPPER: Add these lines here */
+    .search-select option:nth-child(1) { background-image: url('https://www.google.com/s2/favicons?domain=google.com&sz=32'); }
+    .search-select option:nth-child(2) { background-image: url('https://www.google.com/s2/favicons?domain=wikipedia.org&sz=32'); }
+    .search-select option:nth-child(3) { background-image: url('https://www.google.com/s2/favicons?domain=reddit.com&sz=32'); }
+    .search-select option:nth-child(4) { background-image: url('https://www.google.com/s2/favicons?domain=x.com&sz=32'); }
+    .search-select option:nth-child(5) { background-image: url('https://www.google.com/s2/favicons?domain=youtube.com&sz=32'); }
+    .search-select option:nth-child(6) { background-image: url('https://www.google.com/s2/favicons?domain=amazon.co.uk&sz=32'); }
+    .search-select option:nth-child(7) { background-image: url('https://www.google.com/s2/favicons?domain=goodreads.com&sz=32'); }
+    .search-select option:nth-child(8) { background-image: url('https://www.google.com/s2/favicons?domain=archive.org&sz=32'); }
+    .search-select option:nth-child(9) { background-image: url('https://www.google.com/s2/favicons?domain=archive.org&sz=32'); }
+    .search-select option:nth-child(10) { background-image: url('https://www.google.com/s2/favicons?domain=gov.uk&sz=32'); }
+
+    /* Target the dropdown options specifically to ensure they look right */
+    .search-select option {
       background: var(--card);
       color: var(--text);
+      padding: 10px;
+      background-repeat: no-repeat;
+      background-position: 10px center;
+      background-size: 18px;
+      padding-left: 38px;
+      
+      /* New Force Lines for Linux Chrome */
+      display: block;
+      min-height: 24px;
+      line-height: 24px;
+    }
+
+
+
+    .search-container button {
+      background: var(--border);
+      border: none;
+      color: var(--muted);
+      padding: 0 16px;
+      height: 100%;
       cursor: pointer;
-      font-weight: 600;
+    }
+
+    .search-container button {
+      background: var(--border);
+      border: none;
+      color: var(--muted);
+      padding: 0 16px;
+      height: 100%;
+      cursor: pointer;
     }
 
     /* MAIN LAYOUT */
@@ -247,16 +302,23 @@
 <body>
   <header>
     <div class="search-container">
-      <select id="search-engine-selector" class="search-select">
-        <option value="https://duckduckgo.com/?q=">DDG</option>
-        <option value="https://google.com/search?q=">Google</option>
-        <option value="https://en.wikipedia.org/wiki/Special:Search?search=">Wiki</option>
-        <option value="https://web.archive.org/web/*/">Archive</option>
-      </select>
-      <input type="text" id="search-input" placeholder="Search or enter URL..." autocomplete="off">
-      <button onclick="executeSearch()">Go</button>
-    </div>
+  <button id="search-go-btn" onclick="executeSearch()">Go</button>
+  
+  <select id="search-engine-selector" class="search-select" onchange="updateSearchIcon(this)">
+    <option value="https://google.com/search?q=" data-domain="google.com">Google</option>
+    <option value="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org">Wikipedia</option>
+    <option value="https://www.reddit.com/search/?q=" data-domain="reddit.com">Reddit</option>
+    <option value="https://x.com/search?q=" data-domain="x.com">X</option>
+    <option value="https://www.youtube.com/results?search_query=" data-domain="youtube.com">YouTube</option>
+    <option value="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk">Amazon UK</option>
+    <option value="https://www.goodreads.com/search?q=" data-domain="goodreads.com">Goodreads</option>
+    <option value="https://web.archive.org/web/*/" data-domain="archive.org">Web Archive</option>
+    <option value="https://web.archive.org/save/" data-domain="archive.org">Wayback</option>
+    <option value="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk">Gov.uk</option>
+  </select>
 
+  <input type="text" id="search-input" placeholder="Search..." onkeydown="if(event.key==='Enter') executeSearch()">
+</div>
     <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
     <div class="spacer"></div>
     <div id="weather" style="margin-right: 16px; font-size: 20px; font-weight: 600;">
@@ -353,6 +415,14 @@
         window.open(engineBase + encodeURIComponent(input), '_blank');
       }
     }
+/* This function updates the background icon of the selector */
+function updateSearchIcon(select) {
+  const domain = select.options[select.selectedIndex].getAttribute('data-domain');
+  if (domain) {
+    select.style.backgroundImage = `url('https://www.google.com/s2/favicons?domain=${domain}&sz=32')`;
+  }
+}
+    
 
     // Enter key support for search
     document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -506,15 +576,15 @@
       { name: "DeepSeek", url: "https://chat.deepseek.com", note: "ai" },
       { name: "Grok", url: "https://grok.com", note: "ai" },
       { name: "Google News", url: "https://news.google.com/", note :"news" },
-      { name: "BBC Sounds", url: "https://www.bbc.co.uk/sounds", note: "audio" },
+      { name: "BBC Radio4", url: "https://www.bbc.co.uk/sounds/schedules/bbc_radio_fourfm", note: "news" },
+      { name: "The Guardian", url: "https://www.theguardian.com", note: "news" },
       { name: "Spotify", url: "https://open.spotify.com", note: "music" },
       { name: "YouTube", url: "https://www.youtube.com", note: "video" },
       { name: "Facebook", url: "https://www.facebook.com", note: "social" },
       { name: "Reddit", url: "https://www.reddit.com", note: "forums" },
       { name: "Goodreads", url: "https://www.goodreads.com", note: "books" },
-      { name: "The Guardian", url: "https://www.theguardian.com", note: "news" },
       { name: "Wikipedia", url: "https://en.wikipedia.org", note: "reference" },
-      { name: "Co-op Bank", url: "https://www.co-operativebank.co.uk", note: "banking" },
+      { name: "Co-op Bank", url: "https://bank.co-operativebank.co.uk/r/Login/EnterUsername", note: "banking" },
       { name: "Github", url: "https://www.github.com", note: "code" },
       { name: "GDrive", url: "https://drive.google.com/drive/u/0/my-drive", note: "files" }   
     ];

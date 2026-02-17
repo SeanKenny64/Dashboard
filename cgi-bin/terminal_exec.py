@@ -44,13 +44,17 @@ result = subprocess.run(
         
         # Execute command
         result = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=5,  # 5 second timeout
-            cwd=os.path.expanduser("~")  # Run in home directory
-        )
+    [
+        "bash",
+        "-lc",
+        f"source ~/.taskwarrior_functions && {command}"
+    ],
+    capture_output=True,
+    text=True,
+    timeout=5,
+    cwd=os.path.expanduser("~")
+)
+
         
         return {
             "stdout": result.stdout,
