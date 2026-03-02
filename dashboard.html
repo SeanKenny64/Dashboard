@@ -45,12 +45,14 @@
       display: flex;
       flex-direction: row-reverse; 
       align-items: center;
-      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
       overflow: hidden;
       width: min(600px, 100%);
       height: 46px;
+      margin-bottom: 22px;
+      background: #1b1e2c;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
     }
 
     #search-input {
@@ -301,29 +303,14 @@
 
 <body>
   <header>
-    <div class="search-container">
-  <button id="search-go-btn" onclick="executeSearch()">Go</button>
-  
-  <select id="search-engine-selector" class="search-select" onchange="updateSearchIcon(this)">
-    <option value="https://google.com/search?q=" data-domain="google.com">Google</option>
-    <option value="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org">Wikipedia</option>
-    <option value="https://www.reddit.com/search/?q=" data-domain="reddit.com">Reddit</option>
-    <option value="https://x.com/search?q=" data-domain="x.com">X</option>
-    <option value="https://www.youtube.com/results?search_query=" data-domain="youtube.com">YouTube</option>
-    <option value="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk">Amazon UK</option>
-    <option value="https://www.goodreads.com/search?q=" data-domain="goodreads.com">Goodreads</option>
-    <option value="https://web.archive.org/web/*/" data-domain="archive.org">Web Archive</option>
-    <option value="https://web.archive.org/save/" data-domain="archive.org">Wayback</option>
-    <option value="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk">Gov.uk</option>
-  </select>
-
-  <input type="text" id="search-input" placeholder="Search..." onkeydown="if(event.key==='Enter') executeSearch()">
-</div>
+    <div class="minimized-list" id="minimized-list"></div>
     <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
     <div class="spacer"></div>
     <div id="weather" style="margin-right: 16px; font-size: 20px; font-weight: 600;">
-      <span id="weather-icon"></span> <span id="weather-temp">--°C</span>
-    </div>
+  <a href="https://www.bbc.co.uk/weather/2654675" target="_blank" style="color: inherit; text-decoration: none;">
+    <span id="weather-icon"></span> <span id="weather-temp">--°C</span>
+  </a>
+</div>
     <div>
       <div class="clock" id="clock">--:--</div>
       <div class="date" id="date">---</div>
@@ -349,7 +336,25 @@
 
     <section class="card" data-card="quick-launch">
       <h2>Quick Launch <button class="minimize-btn" data-card="quick-launch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
-      <div class="tiles" id="tiles"></div>
+       <div class="search-container">
+        <button id="search-go-btn" onclick="executeSearch()">Go</button>
+  
+        <select id="search-engine-selector" class="search-select" onchange="updateSearchIcon(this)">
+        <option value="https://google.com/search?q=" data-domain="google.com">Google</option>
+        <option value="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org">Wikipedia</option>
+        <option value="https://www.reddit.com/search/?q=" data-domain="reddit.com">Reddit</option>
+        <option value="https://x.com/search?q=" data-domain="x.com">X</option>
+        <option value="https://www.youtube.com/results?search_query=" data-domain="youtube.com">YouTube</option>
+        <option value="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk">Amazon UK</option>
+        <option value="https://www.goodreads.com/search?q=" data-domain="goodreads.com">Goodreads</option>
+        <option value="https://web.archive.org/web/*/" data-domain="archive.org">Web Archive</option>
+        <option value="https://web.archive.org/save/" data-domain="archive.org">Wayback</option>
+        <option value="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk">Gov.uk</option>
+      </select>
+
+  <input type="text" id="search-input" placeholder="Search..." onkeydown="if(event.key==='Enter') executeSearch()">
+</div>
+<div class="tiles" id="tiles"></div>
     </section>
 
     <section class="card" data-card="gmail">
@@ -642,15 +647,16 @@ function updateSearchIcon(select) {
               // Get today's date in YYYY-MM-DD format for Google Calendar URL
               const today = new Date();
               const todayStr = today.toISOString().split('T')[0];
-              const calendarUrl = `https://calendar.google.com/calendar/u/0/r/day/${todayStr}`;
+              const calendarUrl = `https://calendar.google.com/calendar/u/0/r/week`;
               
               return `<div style="margin:4px 0; font-size:12.5px;">
-                        <a href="${calendarUrl}" target="_blank" style="color:#FFA726; text-decoration:none; cursor:pointer;" 
-                           title="Open today's calendar">
-                          • ${event.title} 
-                          <span style="opacity:0.9; color:#FFCC80;">(${when})</span>
-                        </a>
-                      </div>`;
+          <a href="${calendarUrl}" target="_blank" style="color:#FFA726; text-decoration:none; display:inline-block; cursor:pointer;" 
+             title="Open today's calendar"
+             onclick="event.stopPropagation()">
+            • ${event.title} 
+            <span style="opacity:0.9; color:#FFCC80;">(${when})</span>
+          </a>
+        </div>`;
             }).join('') +
           `</div>`
         : `<div style="margin-top:8px; font-size:13px; color:#FFA726;">No upcoming calendar items</div>`;
@@ -862,26 +868,43 @@ setInterval(fetchGmailCount, 300000); // 5 minutes
       updateMinimizedSection();
     };
 
-    /* ---------- TIMER ---------- */
+   /* ---------- POMODORO TIMER ---------- */
+    const alarm = new Audio('https://actions.google.com/sounds/v1/alarms/beep_loop.ogg');
+    alarm.loop = true; 
     let timerInterval = null;
+
     document.getElementById('timerBtn').onclick = function() {
+      // 1. IF THE ALARM IS CURRENTLY SCREAMING: Stop it.
       if (document.body.classList.contains('flashing-active')) {
+        clearInterval(timerInterval);
+        alarm.pause();
+        alarm.currentTime = 0;
         document.body.classList.remove('flashing-active');
         this.textContent = "⏲ Set Timer";
+        this.classList.remove('active');
         return;
       }
-      const input = prompt("Minutes (e.g. 10) or Time (e.g. 15:30):");
-      if (!input) return;
-      let target = input.includes(':') ? new Date().setHours(...input.split(':')) : Date.now() + input * 60000;
+
+      // 2. IF THE TIMER IS ALREADY RUNNING: Reset it.
+      if (timerInterval) clearInterval(timerInterval);
+
+      // 3. START THE 25-MINUTE LOCK
+      let seconds = 25 * 60; 
       this.classList.add('active');
+      
       timerInterval = setInterval(() => {
-        let diff = target - Date.now();
-        if (diff <= 0) {
+        seconds--;
+        
+        // Update button text to show live countdown
+        let mins = Math.floor(seconds / 60);
+        let secs = seconds % 60;
+        this.textContent = `⏳ ${mins}:${secs.toString().padStart(2, '0')}`;
+
+        if (seconds <= 0) {
           clearInterval(timerInterval);
-          document.body.classList.add('flashing-active');
-          this.textContent = "⚠️ STOP";
-        } else {
-          this.textContent = `⏳ ${Math.ceil(diff/60000)}m`;
+          alarm.play(); // Start the infinite loop
+          document.body.classList.add('flashing-active'); // Start the red strobe
+          this.textContent = "⚠️ STOP ALARM";
         }
       }, 1000);
     };
