@@ -18,40 +18,6 @@
 
     * { box-sizing: border-box; }
 
-    .checkin-group {
-      margin-bottom: 0.75rem;
-    }
-    .checkin-label {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 0.3rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .checkin-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-    }
-    .ci-btn {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 0.35rem 0.7rem;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .ci-btn:hover {
-      border-color: var(--muted);
-    }
-    .ci-btn.selected {
-      background: #2a3a5c;
-      border-color: #4a7adc;
-      color: #fff;
-    }
-
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, sans-serif;
@@ -192,7 +158,11 @@
     .card[data-card="gmail"],
     .card[data-card="daily-checkin"] { flex: 1 0 calc(33.333% - 10px); max-width: calc(33.333% - 10px); }
 
-    .card[data-card="notes"] { flex: 0 0 100%; max-width: 100%; }
+    .card[data-card="notes"] { flex: 2 0 400px; max-width: calc(66.666% - 7px); }
+
+    .card[data-card="recent-links"] { flex: 1 0 200px; max-width: calc(33.333% - 10px); }
+
+    .card[data-card="bookmarks"] { flex: 0 0 100%; max-width: 100%; }
 
     .card h2 {
       margin: 0 0 10px;
@@ -392,57 +362,46 @@
       <div id="gmail-count">Loading...</div>
     </section>
 
-    <section class="card" data-card="daily-checkin" id="checkin-card">
+    <section class="card" data-card="daily-checkin">
       <h2>Daily Check-in <button class="minimize-btn" data-card="daily-checkin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
-
-      <div class="checkin-group">
-        <div class="checkin-label">🍺 Drink</div>
-        <div class="checkin-options" data-group="drink">
-          <button class="ci-btn" data-value="0">None</button>
-          <button class="ci-btn" data-value="1-2">1–2</button>
-          <button class="ci-btn" data-value="3-6">3–6</button>
-          <button class="ci-btn" data-value="6+">6+</button>
-        </div>
+      <div class="tiles">
+        <button class="toggle" data-key="drink">🍺 Drank</button>
+        <button class="toggle" data-key="smoke">🚬 Smoked</button>
+        <button class="toggle" data-key="bad_sleep">😵 Bad sleep</button>
+        <button class="toggle" data-key="civ">🎮 Civ</button>
       </div>
-
-      <div class="checkin-group">
-        <div class="checkin-label">🚬 Smoked</div>
-        <div class="checkin-options" data-group="smoked">
-          <button class="ci-btn" data-value="yes">Yes</button>
-          <button class="ci-btn" data-value="no">No</button>
-        </div>
-      </div>
-
-      <div class="checkin-group">
-        <div class="checkin-label">😴 Sleep</div>
-        <div class="checkin-options" data-group="sleep">
-          <button class="ci-btn" data-value="good" title="Slept well, felt rested">Good</button>
-          <button class="ci-btn" data-value="medium-good" title="Mostly fine, a bit groggy">Medium-good</button>
-          <button class="ci-btn" data-value="medium-bad" title="Broken or restless, tired today">Medium-bad</button>
-          <button class="ci-btn" data-value="bad" title="Barely slept, rough">Bad</button>
-        </div>
-      </div>
-
-      <div class="checkin-group">
-        <div class="checkin-label">🎮 Civ</div>
-        <div class="checkin-options" data-group="civ">
-          <button class="ci-btn" data-value="yes">Yes</button>
-          <button class="ci-btn" data-value="no">No</button>
-        </div>
-      </div>
-
-      <div style="margin-top: 1rem;">
-        <button id="submit-checkin" disabled style="opacity:0.4;cursor:not-allowed;">Submit</button>
-        <span id="checkin-status" style="margin-left:0.5rem;font-size:0.85rem;color:var(--muted);"></span>
+      <div style="margin-top: 0.5rem;">
+        <button id="submit-checkin">Submit</button>
+        <span id="checkin-status"></span>
       </div>
     </section>
 
+    <section class="card minimized-section" id="minimized-section" style="display: none;">
+      <h2>Minimized Panels <button class="restore-btn" id="restore-all">Restore All</button></h2>
+      <div class="minimized-list" id="minimized-list"></div>
+    </section>
+
+    <section class="card bookmarks" data-card="bookmarks">
+      <h2>Bookmarks <button class="minimize-btn" data-card="bookmarks"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <input id="bmSearch" placeholder="Filter bookmarks…" style="flex:1; min-width:220px;">
+        <select id="bmSort">
+          <option value="az">A → Z</option>
+          <option value="za">Z → A</option>
+        </select>
+      </div>
+      <ul id="bmList" class="scrollList"></ul>
+    </section>
 
     <section class="card" data-card="notes">
       <h2>Notes <button class="minimize-btn" data-card="notes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <textarea id="notes" placeholder="Scratchpad (autosaves locally)…"></textarea>
     </section>
 
+    <section class="card" data-card="recent-links">
+      <h2>Recent Links <button class="minimize-btn" data-card="recent-links"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
+      <ul id="recentLinks"></ul>
+    </section>
   </main>
 
   <script>
@@ -571,12 +530,15 @@ function updateSearchIcon(select) {
     /* ---------- MINIMIZE & RESTORE ---------- */
     let minimizedPanels = JSON.parse(localStorage.getItem('minimizedPanels') || '{}');
 
-    function updateMinimizedList() {
+    function updateMinimizedSection() {
+      const section = document.getElementById('minimized-section');
       const list = document.getElementById('minimized-list');
-      const current = Object.keys(minimizedPanels).filter(id => minimizedPanels[id] && document.querySelector(`[data-card="${id}"]`));
+      const current = Object.keys(minimizedPanels).filter(id => minimizedPanels[id]);
+      
+      section.style.display = current.length > 0 ? 'block' : 'none';
       list.innerHTML = current.map(id => `
         <div class="minimized-item">
-          ${id.charAt(0).toUpperCase() + id.slice(1).replace('-', ' ')}
+          ${id.charAt(0).toUpperCase() + id.slice(1)}
           <button class="restore-btn" onclick="restorePanel('${id}')">Restore</button>
         </div>
       `).join('');
@@ -588,7 +550,7 @@ function updateSearchIcon(select) {
         el.style.display = 'none';
         minimizedPanels[id] = true;
         localStorage.setItem('minimizedPanels', JSON.stringify(minimizedPanels));
-        updateMinimizedList();
+        updateMinimizedSection();
       }
     }
 
@@ -598,9 +560,13 @@ function updateSearchIcon(select) {
         el.style.display = 'block';
         minimizedPanels[id] = false;
         localStorage.setItem('minimizedPanels', JSON.stringify(minimizedPanels));
-        updateMinimizedList();
+        updateMinimizedSection();
       }
     }
+
+    document.getElementById('restore-all').onclick = () => {
+      Object.keys(minimizedPanels).forEach(id => restorePanel(id));
+    };
 
     // Attach listeners to minimize buttons
     document.querySelectorAll('.minimize-btn').forEach(btn => {
@@ -899,7 +865,7 @@ setInterval(fetchGmailCount, 300000); // 5 minutes
     // Initial minimized state check
     window.onload = () => {
       Object.keys(minimizedPanels).forEach(id => { if(minimizedPanels[id]) minimizePanel(id); });
-      updateMinimizedList();
+      updateMinimizedSection();
     };
 
    /* ---------- POMODORO TIMER ---------- */
@@ -944,69 +910,12 @@ setInterval(fetchGmailCount, 300000); // 5 minutes
     };
 
     /* ---------- CHECK-IN ---------- */
-
-    // Hide card if already submitted today
-(function() {
-  const submitted = localStorage.getItem('checkin-submitted');
-  if (!submitted) return;
-
-  const today = new Date().toDateString();
-  const submittedDate = new Date(parseInt(submitted)).toDateString();
-
-  if (today === submittedDate) {
-    document.getElementById('checkin-card').style.display = 'none';
-  }
-})();
-
-    // Radio selection logic
-    document.querySelectorAll('.checkin-options').forEach(group => {
-      group.querySelectorAll('.ci-btn').forEach(btn => {
-        btn.onclick = () => {
-          group.querySelectorAll('.ci-btn').forEach(b => b.classList.remove('selected'));
-          btn.classList.add('selected');
-          checkAllSelected();
-        };
-      });
+    document.querySelectorAll('.toggle[data-key]').forEach(btn => {
+      btn.onclick = () => btn.classList.toggle('active');
     });
-
-    function checkAllSelected() {
-      const groups = ['drink','smoked','sleep','civ'];
-      const allDone = groups.every(g => {
-        const el = document.querySelector(`.checkin-options[data-group="${g}"] .ci-btn.selected`);
-        return el !== null;
-      });
-      const submitBtn = document.getElementById('submit-checkin');
-      submitBtn.disabled = !allDone;
-      submitBtn.style.opacity = allDone ? '1' : '0.4';
-      submitBtn.style.cursor = allDone ? 'pointer' : 'not-allowed';
-    }
-
-    document.getElementById('submit-checkin').onclick = async () => {
-      const get = (group) => document.querySelector(`.checkin-options[data-group="${group}"] .ci-btn.selected`)?.dataset.value ?? null;
-      const payload = {
-        drink:  get('drink'),
-        smoked: get('smoked'),
-        sleep:  get('sleep'),
-        civ:    get('civ')
-      };
-      const statusEl = document.getElementById('checkin-status');
-      try {
-        const res = await fetch('cgi-bin/save_checkin.py', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.status === 'ok') {
-          localStorage.setItem('checkin-submitted', Date.now().toString());
-          document.getElementById('checkin-card').style.display = 'none';
-        } else {
-          statusEl.textContent = '⚠ Server error';
-        }
-      } catch (e) {
-        statusEl.textContent = '⚠ Could not reach server';
-        console.error(e);
-      }
+    document.getElementById('submit-checkin').onclick = () => {
+      const keys = Array.from(document.querySelectorAll('.toggle.active[data-key]')).map(b => b.dataset.key);
+      document.getElementById('checkin-status').textContent = "Saved: " + keys.join(', ');
     };
   </script>
 </body>
