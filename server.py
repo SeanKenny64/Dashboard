@@ -3,6 +3,7 @@ from http.server import HTTPServer, CGIHTTPRequestHandler
 import json
 import subprocess
 import os
+import re
 import urllib.parse
 from datetime import date
 from data_handler import read_data, write_data
@@ -58,6 +59,10 @@ alias tdel='task delete'
             return {"error": f"Execution error: {str(e)}"}
     
     def do_GET(self):
+        if self.path == '/api/shopping':
+            self._handle_shopping()
+            return
+
         if self.path == '/api/data' or self.path.startswith('/api/data?'):
             self._handle_api_get()
             return
@@ -158,6 +163,29 @@ alias tdel='task delete'
 
         except Exception as e:
             print(f"✗ CHECKIN ERROR: {e}")
+            self.send_error(500, f"Server error: {e}")
+
+    def _handle_shopping(self):
+        """Handle GET /api/shopping - return high-priority out-of-stock groceries from Taskwarrior"""
+        try:
+            result = subprocess.run(
+                ['task', '+oostock', 'pri:H', 'export'],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                cwd=os.path.expanduser("~")
+            )
+            # Strip control characters that task sometimes adds to export output
+            clean = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', result.stdout)
+            tasks = json.loads(clean) if clean.strip() else []
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(tasks).encode())
+            print(f"✓ SHOPPING: returned {len(tasks)} items")
+        except Exception as e:
+            print(f"✗ SHOPPING ERROR: {e}")
             self.send_error(500, f"Server error: {e}")
 
     def _handle_api_get(self):

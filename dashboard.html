@@ -443,6 +443,11 @@
       <textarea id="notes" placeholder="Scratchpad (autosaves locally)…"></textarea>
     </section>
 
+    <section class="card" data-card="shopping">
+      <h2>Shopping List <button class="minimize-btn" data-card="shopping"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
+      <div id="shopping-list" style="font-size: 14px; line-height: 2;">Loading...</div>
+    </section>
+
   </main>
 
   <script>
@@ -1008,6 +1013,27 @@ setInterval(fetchGmailCount, 300000); // 5 minutes
         console.error(e);
       }
     };
+    /* ---------- SHOPPING LIST ---------- */
+    async function loadShoppingList() {
+      const container = document.getElementById('shopping-list');
+      try {
+        const response = await fetch('/api/shopping');
+        const tasks = await response.json();
+        if (tasks.length === 0) {
+          container.innerHTML = '<span style="color: var(--muted)">Nothing needed right now.</span>';
+          return;
+        }
+        container.innerHTML = tasks
+          .map(t => `<div>🛒 ${t.description}</div>`)
+          .join('');
+      } catch (e) {
+        container.innerHTML = '<span style="color: #ff4444">Could not load shopping list.</span>';
+        console.error('Shopping list error:', e);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadShoppingList);
+
   </script>
 </body>
 </html>
