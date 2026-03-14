@@ -81,7 +81,7 @@
       align-items: center;
       border: 1px solid var(--border);
       border-radius: 12px;
-      overflow: hidden;
+      overflow: visible;
       width: min(600px, 100%);
       height: 46px;
       margin-bottom: 22px;
@@ -99,50 +99,68 @@
       font-size: 15px;
     }
 
-    .search-select {
-      width: 140px; /* Wider to fit both Icon and Text */
+    .search-select { display: none; } /* hidden - replaced by custom dropdown */
+
+    /* CUSTOM ENGINE DROPDOWN */
+    .engine-dropdown {
+      position: relative;
       height: 100%;
-      border: none !important;
-      border-left: 1px solid var(--border) !important; /* Single clean divider */
-      background: transparent no-repeat;
-      background-image: url('https://www.google.com/s2/favicons?domain=google.com&sz=32');
-      background-position: 10px center; /* Icon on the left */
-      background-size: 18px;
-      color: var(--text); /* Text is now visible */
-      padding-left: 35px; /* Pushes text to the right of the icon */
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      font-size: 14px;
-      outline: none;
+      border-left: 1px solid var(--border);
+      flex-shrink: 0;
     }
-
-        /* THE ICON MAPPER: Add these lines here */
-    .search-select option:nth-child(1) { background-image: url('https://www.google.com/s2/favicons?domain=google.com&sz=32'); }
-    .search-select option:nth-child(2) { background-image: url('https://www.google.com/s2/favicons?domain=wikipedia.org&sz=32'); }
-    .search-select option:nth-child(3) { background-image: url('https://www.google.com/s2/favicons?domain=reddit.com&sz=32'); }
-    .search-select option:nth-child(4) { background-image: url('https://www.google.com/s2/favicons?domain=x.com&sz=32'); }
-    .search-select option:nth-child(5) { background-image: url('https://www.google.com/s2/favicons?domain=youtube.com&sz=32'); }
-    .search-select option:nth-child(6) { background-image: url('https://www.google.com/s2/favicons?domain=amazon.co.uk&sz=32'); }
-    .search-select option:nth-child(7) { background-image: url('https://www.google.com/s2/favicons?domain=goodreads.com&sz=32'); }
-    .search-select option:nth-child(8) { background-image: url('https://www.google.com/s2/favicons?domain=archive.org&sz=32'); }
-    .search-select option:nth-child(9) { background-image: url('https://www.google.com/s2/favicons?domain=archive.org&sz=32'); }
-    .search-select option:nth-child(10) { background-image: url('https://www.google.com/s2/favicons?domain=gov.uk&sz=32'); }
-
-    /* Target the dropdown options specifically to ensure they look right */
-    .search-select option {
-      background: var(--card);
+    .engine-selected {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 100%;
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 14px;
       color: var(--text);
-      padding: 10px;
-      background-repeat: no-repeat;
-      background-position: 10px center;
-      background-size: 18px;
-      padding-left: 38px;
-      
-      /* New Force Lines for Linux Chrome */
-      display: block;
-      min-height: 24px;
-      line-height: 24px;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .engine-selected img {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+    }
+    .engine-selected::after {
+      content: '▾';
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+    .engine-options {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      z-index: 100;
+      min-width: 170px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .engine-options.open { display: block; }
+    .engine-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .engine-option:hover { background: rgba(255,255,255,0.07); }
+    .engine-option.active { background: #2a3a5c; color: #fff; }
+    .engine-option img {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
     }
 
 
@@ -313,12 +331,56 @@
 
     .minimized-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .minimized-item { display: flex; align-items: center; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
-    .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-    .tile { display: block; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); text-decoration: none; }
-    .tileRow { display: flex; align-items: center; gap: 10px; }
-    .favicon { width: 22px; height: 22px; border-radius: 6px; flex: 0 0 22px; background: #0b0c0f; border: 1px solid var(--border); }
-    .tileTitle { font-weight: 600; }
-    .tileMeta { color: var(--muted); margin-top: 4px; font-size: 12px; }
+    .tiles { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+    .tile { display: block; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: #0f111a; color: var(--text); text-decoration: none; }
+    .tileRow { display: flex; align-items: center; gap: 7px; }
+    .favicon { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 16px; background: #0b0c0f; border: 1px solid var(--border); }
+    .tileTitle { font-weight: 600; font-size: 12px; }
+
+    /* TILE GROUPS */
+    .tile-groups-wrapper { display: flex; flex-direction: column; gap: 6px; }
+    .tile-groups-collapsed-bar { display: flex; flex-wrap: wrap; gap: 5px; min-height: 0; }
+    .tile-groups-open { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+    .tile-group-pill {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--text);
+      cursor: default;
+    }
+    .tile-group-pill-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-left: 8px;
+    }
+    .tile-group-pill-btn:hover { color: var(--text); border-color: var(--muted); }
+
+    .tile-group { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    .tile-group-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      user-select: none;
+    }
+    .tile-group-header:hover { filter: brightness(1.2); }
+    .tile-group-header .group-chevron { margin-left: auto; font-size: 10px; color: rgba(255,255,255,0.5); }
+    .tile-group-body { padding: 8px; }
     textarea { width: 100%; min-height: 180px; resize: vertical; padding: 12px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); }
     .toggle { padding: 16px; font-size: 16px; border-radius: 14px; border: 1px solid var(--border); background: #0f111a; color: var(--text); cursor: pointer; }
     .toggle.active { border-color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
@@ -368,23 +430,67 @@
       <h2>Quick Launch <button class="minimize-btn" data-card="quick-launch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
        <div class="search-container">
         <button id="search-go-btn" onclick="executeSearch()">Go</button>
-  
-        <select id="search-engine-selector" class="search-select" onchange="updateSearchIcon(this)">
-        <option value="https://google.com/search?q=" data-domain="google.com">Google</option>
-        <option value="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org">Wikipedia</option>
-        <option value="https://www.reddit.com/search/?q=" data-domain="reddit.com">Reddit</option>
-        <option value="https://x.com/search?q=" data-domain="x.com">X</option>
-        <option value="https://www.youtube.com/results?search_query=" data-domain="youtube.com">YouTube</option>
-        <option value="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk">Amazon UK</option>
-        <option value="https://www.goodreads.com/search?q=" data-domain="goodreads.com">Goodreads</option>
-        <option value="https://web.archive.org/web/*/" data-domain="archive.org">Web Archive</option>
-        <option value="https://web.archive.org/save/" data-domain="archive.org">Wayback</option>
-        <option value="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk">Gov.uk</option>
-      </select>
+
+        <!-- Custom engine dropdown (replaces <select>) -->
+        <div class="engine-dropdown" id="engine-dropdown">
+          <div class="engine-selected" id="engine-selected" onclick="toggleEngineDropdown()">
+            <img id="engine-icon" src="https://www.google.com/s2/favicons?domain=google.com&sz=32" alt="">
+            <span id="engine-label">Google</span>
+          </div>
+          <div class="engine-options" id="engine-options">
+            <div class="engine-option active" data-url="https://google.com/search?q=" data-domain="google.com" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=google.com&sz=32" alt=""> Google
+            </div>
+            <div class="engine-option" data-url="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=wikipedia.org&sz=32" alt=""> Wikipedia
+            </div>
+            <div class="engine-option" data-url="https://www.reddit.com/search/?q=" data-domain="reddit.com" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt=""> Reddit
+            </div>
+            <div class="engine-option" data-url="https://x.com/search?q=" data-domain="x.com" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt=""> X
+            </div>
+            <div class="engine-option" data-url="https://www.youtube.com/results?search_query=" data-domain="youtube.com" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=youtube.com&sz=32" alt=""> YouTube
+            </div>
+            <div class="engine-option" data-url="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=amazon.co.uk&sz=32" alt=""> Amazon UK
+            </div>
+            <div class="engine-option" data-url="https://www.goodreads.com/search?q=" data-domain="goodreads.com" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=goodreads.com&sz=32" alt=""> Goodreads
+            </div>
+            <div class="engine-option" data-url="https://web.archive.org/web/*/" data-domain="archive.org" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=archive.org&sz=32" alt=""> Web Archive
+            </div>
+            <div class="engine-option" data-url="https://web.archive.org/save/" data-domain="archive.org" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=archive.org&sz=32" alt=""> Wayback
+            </div>
+            <div class="engine-option" data-url="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk" onclick="selectEngine(this)">
+              <img src="https://www.google.com/s2/favicons?domain=gov.uk&sz=32" alt=""> Gov.uk
+            </div>
+          </div>
+        </div>
+
+        <!-- Keep old select hidden so executeSearch() still works -->
+        <select id="search-engine-selector" class="search-select">
+          <option value="https://google.com/search?q=" data-domain="google.com">Google</option>
+          <option value="https://en.wikipedia.org/wiki/Special:Search?search=" data-domain="wikipedia.org">Wikipedia</option>
+          <option value="https://www.reddit.com/search/?q=" data-domain="reddit.com">Reddit</option>
+          <option value="https://x.com/search?q=" data-domain="x.com">X</option>
+          <option value="https://www.youtube.com/results?search_query=" data-domain="youtube.com">YouTube</option>
+          <option value="https://www.amazon.co.uk/s?k=" data-domain="amazon.co.uk">Amazon UK</option>
+          <option value="https://www.goodreads.com/search?q=" data-domain="goodreads.com">Goodreads</option>
+          <option value="https://web.archive.org/web/*/" data-domain="archive.org">Web Archive</option>
+          <option value="https://web.archive.org/save/" data-domain="archive.org">Wayback</option>
+          <option value="https://www.gov.uk/search/all?keywords=" data-domain="gov.uk">Gov.uk</option>
+        </select>
 
   <input type="text" id="search-input" placeholder="Search..." onkeydown="if(event.key==='Enter') executeSearch()">
 </div>
-<div class="tiles" id="tiles"></div>
+<div class="tile-groups-wrapper">
+          <div class="tile-groups-collapsed-bar" id="tile-groups-collapsed"></div>
+          <div class="tile-groups-open" id="tile-groups-open"></div>
+        </div>
     </section>
 
     <section class="card" data-card="gmail">
@@ -451,19 +557,46 @@
   </main>
 
   <script>
+    /* ---------- CUSTOM ENGINE DROPDOWN ---------- */
+    let currentEngineUrl = 'https://google.com/search?q=';
+
+    function toggleEngineDropdown() {
+      document.getElementById('engine-options').classList.toggle('open');
+    }
+
+    function selectEngine(el) {
+      // Update hidden select so executeSearch() still works
+      currentEngineUrl = el.dataset.url;
+      const sel = document.getElementById('search-engine-selector');
+      for (let opt of sel.options) {
+        if (opt.value === currentEngineUrl) { opt.selected = true; break; }
+      }
+      // Update visible button
+      document.getElementById('engine-icon').src = el.querySelector('img').src;
+      document.getElementById('engine-label').textContent = el.textContent.trim();
+      // Mark active
+      document.querySelectorAll('.engine-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      // Close
+      document.getElementById('engine-options').classList.remove('open');
+    }
+
+    // Close dropdown if user clicks outside it
+    document.addEventListener('click', (e) => {
+      if (!document.getElementById('engine-dropdown').contains(e.target)) {
+        document.getElementById('engine-options').classList.remove('open');
+      }
+    });
+
     /* ---------- SEARCH LOGIC ---------- */
     function executeSearch() {
       const input = document.getElementById('search-input').value.trim();
-      const engineBase = document.getElementById('search-engine-selector').value;
       if (!input) return;
-
-      // URL detection: if it has a dot and no spaces
       if (input.includes('.') && !input.includes(' ')) {
         let url = input.startsWith('http') ? input : 'https://' + input;
         window.open(url, '_blank');
       } else {
-        // Search using selected engine
-        window.open(engineBase + encodeURIComponent(input), '_blank');
+        window.open(currentEngineUrl + encodeURIComponent(input), '_blank');
       }
     }
 /* This function updates the background icon of the selector */
@@ -613,37 +746,109 @@ function updateSearchIcon(select) {
     });
 
     /* ---------- TILES & BOOKMARKS ---------- */
-    const TILES = [
-      { name: "ChatGPT", url: "https://chatgpt.com", note: "ai" },
-      { name: "Gemini", url: "https://gemini.google.com/app", note: "ai" },
-      { name: "Claude", url: "https://claude.ai", note: "ai" },
-      { name: "DeepSeek", url: "https://chat.deepseek.com", note: "ai" },
-      { name: "Grok", url: "https://grok.com", note: "ai" },
-      { name: "Google News", url: "https://news.google.com/", note :"news" },
-      { name: "BBC Radio4", url: "https://www.bbc.co.uk/sounds/schedules/bbc_radio_fourfm", note: "news" },
-      { name: "The Guardian", url: "https://www.theguardian.com", note: "news" },
-      { name: "Spotify", url: "https://open.spotify.com", note: "music" },
-      { name: "YouTube", url: "https://www.youtube.com", note: "video" },
-      { name: "Facebook", url: "https://www.facebook.com", note: "social" },
-      { name: "Reddit", url: "https://www.reddit.com", note: "forums" },
-      { name: "Goodreads", url: "https://www.goodreads.com", note: "books" },
-      { name: "Wikipedia", url: "https://en.wikipedia.org", note: "reference" },
-      { name: "Co-op Bank", url: "https://bank.co-operativebank.co.uk/r/Login/EnterUsername", note: "banking" },
-      { name: "Github", url: "https://www.github.com", note: "code" },
-      { name: "GDrive", url: "https://drive.google.com/drive/u/0/my-drive", note: "files" }   
+    const TILE_GROUPS = [
+      {
+        name: 'AI', color: '#7c6fde', bg: 'rgba(124,111,222,0.15)',
+        tiles: [
+          { name: "ChatGPT",  url: "https://chatgpt.com" },
+          { name: "Gemini",   url: "https://gemini.google.com/app" },
+          { name: "Claude",   url: "https://claude.ai" },
+          { name: "DeepSeek", url: "https://chat.deepseek.com" },
+          { name: "Grok",     url: "https://grok.com" },
+        ]
+      },
+      {
+        name: 'News', color: '#e07b4a', bg: 'rgba(224,123,74,0.15)',
+        tiles: [
+          { name: "Google News",  url: "https://news.google.com/" },
+          { name: "BBC Radio 4",  url: "https://www.bbc.co.uk/sounds/schedules/bbc_radio_fourfm" },
+          { name: "The Guardian", url: "https://www.theguardian.com" },
+        ]
+      },
+      {
+        name: 'Media', color: '#4aade0', bg: 'rgba(74,173,224,0.15)',
+        tiles: [
+          { name: "Spotify",   url: "https://open.spotify.com" },
+          { name: "YouTube",   url: "https://www.youtube.com" },
+          { name: "Facebook",  url: "https://www.facebook.com" },
+          { name: "Reddit",    url: "https://www.reddit.com" },
+          { name: "Goodreads", url: "https://www.goodreads.com" },
+        ]
+      },
+      {
+        name: 'Reference', color: '#4ac49e', bg: 'rgba(74,196,158,0.15)',
+        tiles: [
+          { name: "Wikipedia", url: "https://en.wikipedia.org" },
+        ]
+      },
+      {
+        name: 'Work', color: '#e0c44a', bg: 'rgba(224,196,74,0.15)',
+        tiles: [
+          { name: "Github", url: "https://www.github.com" },
+          { name: "GDrive", url: "https://drive.google.com/drive/u/0/my-drive" },
+        ]
+      },
+      {
+        name: 'Banking', color: '#4ae07b', bg: 'rgba(74,224,123,0.15)',
+        tiles: [
+          { name: "Co-op Bank", url: "https://bank.co-operativebank.co.uk/r/Login/EnterUsername" },
+        ]
+      },
     ];
+
+    // Load collapsed state from localStorage
+    let collapsedGroups = JSON.parse(localStorage.getItem('collapsedGroups') || '{}');
 
     function faviconFor(url) {
       try { return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`; } catch { return ""; }
     }
 
-    document.getElementById("tiles").innerHTML = TILES.map(t => `
-      <a class="tile" href="${t.url}" target="_blank">
-        <div class="tileRow">
-          <img class="favicon" src="${faviconFor(t.url)}" alt="" />
-          <div><div class="tileTitle">${t.name}</div><div class="tileMeta">${t.note}</div></div>
+    function toggleGroup(name) {
+      collapsedGroups[name] = !collapsedGroups[name];
+      localStorage.setItem('collapsedGroups', JSON.stringify(collapsedGroups));
+      renderGroups();
+    }
+
+    function renderGroups() {
+      const collapsedBar = document.getElementById('tile-groups-collapsed');
+      const openGrid    = document.getElementById('tile-groups-open');
+
+      const collapsed = TILE_GROUPS.filter(g => collapsedGroups[g.name]);
+      const open      = TILE_GROUPS.filter(g => !collapsedGroups[g.name]);
+
+      // Collapsed groups → pills matching the main minimized-item style, with group colour
+      collapsedBar.innerHTML = collapsed.map(g => `
+        <div class="tile-group-pill" style="border-color: ${g.color}44; background: ${g.bg};">
+          <span style="color: ${g.color}; font-weight: 600;">${g.name}</span>
+          <button class="tile-group-pill-btn" style="border-color: ${g.color}66; color: ${g.color};"
+                  onclick="toggleGroup('${g.name}')">Restore</button>
         </div>
-      </a>`).join("");
+      `).join('');
+
+      // Open groups → two-column grid
+      openGrid.innerHTML = open.map(g => `
+        <div class="tile-group">
+          <div class="tile-group-header"
+               style="background:${g.bg}; color:${g.color}; border-bottom:1px solid ${g.color}44;"
+               onclick="toggleGroup('${g.name}')">
+            ${g.name}
+            <span class="group-chevron">▾</span>
+          </div>
+          <div class="tile-group-body">
+            <div class="tiles">
+              ${g.tiles.map(t => `
+                <a class="tile" href="${t.url}" target="_blank" style="border-color:${g.color}33;">
+                  <div class="tileRow">
+                    <img class="favicon" src="${faviconFor(t.url)}" alt="">
+                    <div class="tileTitle">${t.name}</div>
+                  </div>
+                </a>`).join('')}
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    renderGroups();
 
     /* ---------- CORE UTILITIES ---------- */
     function tick() {

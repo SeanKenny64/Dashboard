@@ -169,7 +169,7 @@ alias tdel='task delete'
         """Handle GET /api/shopping - return high-priority out-of-stock groceries from Taskwarrior"""
         try:
             result = subprocess.run(
-                ['task', '+oostock', 'pri:H', 'export'],
+                ['task', '+oostock', '+groceries', 'pri:H', 'export'],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -177,7 +177,8 @@ alias tdel='task delete'
             )
             # Strip control characters that task sometimes adds to export output
             clean = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', result.stdout)
-            tasks = json.loads(clean) if clean.strip() else []
+            all_tasks = json.loads(clean) if clean.strip() else []
+            tasks = [t for t in all_tasks if t.get('status') == 'pending']
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
