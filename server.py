@@ -69,6 +69,10 @@ alias tdel='task delete'
         
         if self.path == '/':
             self.path = '/dashboard.html'
+
+        if self.path == '/api/weather':
+            self._handle_weather()
+            return
         
         super().do_GET()
     
@@ -116,6 +120,23 @@ alias tdel='task delete'
         except Exception as e:
             print(f"✗ TERMINAL ERROR: {e}")
             self.send_error(500, f"Server error: {e}")
+
+    def _handle_weather(self):
+        """Proxy weather data from wttr.in to avoid CORS"""
+        try:
+
+            import urllib.request
+            with urllib.request.urlopen('http://wttr.in/Bristol?format=j1', timeout=5) as r:
+                data = r.read()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(data)
+            print("✓ WEATHER: fetched OK")
+        except Exception as e:
+            print(f"✗ WEATHER ERROR: {e}")
+            self.send_error(500, f"Weather fetch failed: {e}")        
 
     def _handle_save_checkin(self):
         """Handle POST /cgi-bin/save_checkin.py - save daily check-in data"""
