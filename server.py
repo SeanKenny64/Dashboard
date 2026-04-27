@@ -73,6 +73,10 @@ alias tdel='task delete'
         if self.path == '/api/weather':
             self._handle_weather()
             return
+
+        if self.path == '/api/food-diary/recent':
+            self._handle_food_diary_recent()
+            return
         
         super().do_GET()
     
@@ -83,6 +87,10 @@ alias tdel='task delete'
 
         if self.path == '/cgi-bin/save_checkin.py':
             self._handle_save_checkin()
+            return
+
+        if self.path == '/api/food-diary':
+            self._handle_food_diary_post()
             return
         
         if self.path.startswith('/api/'):
@@ -124,7 +132,6 @@ alias tdel='task delete'
     def _handle_weather(self):
         """Proxy weather data from wttr.in to avoid CORS"""
         try:
-
             import urllib.request
             with urllib.request.urlopen('http://wttr.in/Bristol?format=j1', timeout=5) as r:
                 data = r.read()
@@ -225,7 +232,100 @@ alias tdel='task delete'
         except Exception as e:
             print(f"✗ GET {self.path} - Error: {e}")
             self.send_error(500, f"Server error: {e}")
-    
+
+    def _handle_food_diary_post(self):
+        """Handle POST /api/food-diary - save entry to Logseq journal"""
+        try:
+            from datetime import datetime
+            import email
+            from email import policy as email_policy
+
+            LOGSEQ_JOURNALS = os.path.expanduser('~/Documents/LogSeq/journals')
+            LOGSEQ_ASSETS   = os.path.expanduser('~/Documents/LogSeq/assets')
+            FOOD_LOG        = os.path.expanduser('~/Documents/LogSeq/assets/food_diary_log.json')
+
+            content_type   = self.headers.get('Content-Type', '')
+            content_length = int(self.headers.get('Content-Length', 0))
+            body           = self.rfile.read(content_length)
+
+            # Parse multipart form data using Python's email parser (no cgi module needed)
+            raw = b'Content-Type: ' + content_type.encode() + b'\r\n\r\n' + body
+            msg = email.message_from_bytes(raw, policy=email_policy.compat32)
+
+            text       = ''
+            photo_name = None
+            photo_md   = ''
+            now        = datetime.now()
+            timestamp  = now.strftime('%H:%M')
+            date_str   = now.strftime('%Y_%m_%d')
+
+            for part in msg.get_payload():
+                disposition = part.get('Content-Disposition', '')
+                if 'name="text"' in disposition:
+                    text = part.get_payload(decode=True).decode('utf-8', errors='replace').strip()
+                elif 'name="photo"' in disposition and 'filename=' in disposition:
+                    filename = disposition.split('filename=')[-1].strip().strip('"')
+                    if filename:
+                        os.makedirs(LOGSEQ_ASSETS, exist_ok=True)
+                        safe_name  = f"food_{now.strftime('%Y%m%d_%H%M%S')}_{os.path.basename(filename)}"
+                        photo_path = os.path.join(LOGSEQ_ASSETS, safe_name)
+                        with open(photo_path, 'wb') as f:
+                            f.write(part.get_payload(decode=True))
+                        photo_md   = f'\n  - ![{safe_name}](../assets/{safe_name})'
+                        photo_name = safe_name
+
+            # Write to Logseq journal
+            logseq_block = f'- 🍽️ #FoodDiary {timestamp}: {text}{photo_md}huhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuh\n'
+            os.makedirs(LOGSEQ_JOURNALS, exist_ok=True)
+            journal_file = os.path.join(LOGSEQ_JOURNALS, f'{date_str}.md')
+            with open(journal_file, 'a', encoding='utf-8') as f:
+                f.write(logseq_block)
+
+            # Update JSON log for dashboard recent feed
+            log = []
+            if os.path.exists(FOOD_LOG):
+                with open(FOOD_LOG, 'r') as f:
+                    try:
+                        log = json.load(f)
+                    except Exception:
+                        log = []
+            log.insert(0, {
+                'time':  now.strftime('%d %b %H:%M'),
+                'text':  text,
+                'photo': photo_name
+            })
+            log = log[:50]
+            with open(FOOD_LOG, 'w') as f:
+                json.dump(log, f, indent=2)
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'ok': True}).encode())
+            print(f"✓ FOOD DIARY: {timestamp} — {text[:40] if text else '[photo only]'}")
+
+        except Exception as e:
+            print(f"✗ FOOD DIARY ERROR: {e}")
+            self.send_error(500, f"Server error: {e}")
+
+    def _handle_food_diary_recent(self):
+        """Handle GET /api/food-diary/recent - return recent food diary entries"""
+        try:
+            FOOD_LOG = os.path.expanduser('~/Documents/LogSeq/assets/food_diary_log.json')
+            log = []
+            if os.path.exists(FOOD_LOG):
+                with open(FOOD_LOG, 'r') as f:
+                    log = json.load(f)
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'entries': log[:10]}).encode())
+        except Exception as e:
+            print(f"✗ FOOD DIARY RECENT ERROR: {e}")
+            self.send_error(500, f"Server error: {e}")
+
     def _handle_api_post(self):
         """Handle POST /api/save-notes and other API endpoints"""
         try:
@@ -267,7 +367,7 @@ if __name__ == "__main__":
     print("=" * 50)
     print("URL:      http://localhost:8000")
     print("Features: Static files + CGI + API")
-    print("API:      /api/data (GET), /api/save-notes (POST)")
+    print("API:      /api/data (GET), /api/save-notes (POST), /api/food-diary (POST)")
     print("CGI:      /cgi-bin/terminal_exec.py, /cgi-bin/save_checkin.py")
     print("=" * 50)
     server.serve_forever()
