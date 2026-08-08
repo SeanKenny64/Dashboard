@@ -563,7 +563,11 @@
 
     <section class="card" data-card="notes">
       <h2>Notes <button class="minimize-btn" data-card="notes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
-      <textarea id="notes" placeholder="Scratchpad (autosaves locally)…"></textarea>
+      <textarea id="notes" placeholder="Type your note… add #tags inline"></textarea>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+        <button id="notes-log-btn" style="background:#2a3a5c; border:1px solid #4a7adc; color:#fff; border-radius:8px; padding:0.4rem 1rem; font-size:0.9rem; cursor:pointer;">📝 Log It</button>
+        <span id="notes-status" style="font-size:0.8rem; color:var(--muted);"></span>
+      </div>
     </section>
 
     <section class="card" data-card="shopping">
@@ -1138,102 +1142,47 @@ setInterval(fetchGmailCount, 300000); // 5 minutes
     // Fetch weather on page load only (user will refresh page to update)
     fetchWeather();
 
-        /* ---------- SERVER-SYNCED NOTES ---------- */
+        /* ---------- NOTES (Logseq) ---------- */
     const notes = document.getElementById("notes");
-    let isSaving = false;
-    let lastServerNotes = "";
+    const notesLogBtn = document.getElementById("notes-log-btn");
+    const notesStatus = document.getElementById("notes-status");
 
-    // 1. Load notes from server when page opens
-    async function loadNotesFromServer() {
-      try {
-        console.log("Loading notes from server...");
-        const response = await fetch('/api/data');
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        lastServerNotes = data.notes || "";
-        
-        // Only update if user isn't currently typing
-        if (document.activeElement !== notes || notes.value === "") {
-          notes.value = lastServerNotes;
-        }
-        
-        console.log("Notes loaded from server");
-      } catch (error) {
-        console.error("Failed to load notes:", error);
-        // Fallback to localStorage
-        notes.value = localStorage.getItem("dashboard_notes") || "";
-      }
+    // Load notes from localStorage on page open
+    function loadNotesFromServer() {
+      notes.value = localStorage.getItem("dashboard_notes") || "";
     }
 
-    // 2. Save notes to server (with delay)
-    let saveTimeout = null;
+    // Save locally as user types (so they don't lose anything)
     notes.oninput = () => {
-      // Clear any pending save
-      if (saveTimeout) {
-        clearTimeout(saveTimeout);
-      }
-      
-      // Save after 2 seconds of no typing
-      saveTimeout = setTimeout(async () => {
-        if (isSaving) return;
-        
-        isSaving = true;
-        try {
-          await fetch('/api/save-notes', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              notes: notes.value
-            })
-          });
-          lastServerNotes = notes.value;
-          console.log("Notes saved to server");
-          
-          // Also save to localStorage as backup
-          localStorage.setItem("dashboard_notes", notes.value);
-        } catch (error) {
-          console.error("Failed to save:", error);
-          // Fallback to localStorage only
-          localStorage.setItem("dashboard_notes", notes.value);
-        } finally {
-          isSaving = false;
-        }
-      }, 2000); // 2 second delay
+      localStorage.setItem("dashboard_notes", notes.value);
     };
 
-    // 3. Check for updates from other devices every 10 seconds
-    async function checkForNoteUpdates() {
-      if (isSaving) return;
-      
+    // Log It button — sends to Logseq and clears
+    notesLogBtn.addEventListener('click', async () => {
+      const text = notes.value.trim();
+      if (!text) { notesStatus.textContent = 'Nothing to log.'; return; }
+      notesLogBtn.disabled = true;
+      notesStatus.textContent = 'Saving…';
       try {
-        const response = await fetch(`/api/data?t=${Date.now()}`);
-        if (!response.ok) return;
-        
-        const data = await response.json();
-        const serverNotes = data.notes || "";
-        
-        // Update if notes changed AND we're not currently typing in notes
-        if (serverNotes !== lastServerNotes && 
-            serverNotes !== notes.value && 
-            document.activeElement !== notes) {
-          
-          console.log("Updating notes from other device...");
-          notes.value = serverNotes;
-          lastServerNotes = serverNotes;
-          
-          // Also update localStorage
-          localStorage.setItem("dashboard_notes", serverNotes);
+        const res = await fetch('/api/notes-logseq', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: text })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          notesStatus.textContent = '✓ Logged to Logseq';
+          notes.value = '';
+          localStorage.setItem("dashboard_notes", '');
+          setTimeout(() => { notesStatus.textContent = ''; }, 3000);
+        } else {
+          notesStatus.textContent = '⚠ Error saving';
         }
-      } catch (error) {
-        // Silent fail - we'll try again next time
+      } catch(e) {
+        notesStatus.textContent = '⚠ Could not reach server';
       }
-    }
-
-    // Start checking for updates
-    setInterval(checkForNoteUpdates, 10000); // Every 10 seconds
+      notesLogBtn.disabled = false;
+    });
 
     // Load notes when page loads
     window.addEventListener('DOMContentLoaded', loadNotesFromServer);

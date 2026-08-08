@@ -92,6 +92,10 @@ alias tdel='task delete'
         if self.path == '/api/food-diary':
             self._handle_food_diary_post()
             return
+
+        if self.path == '/api/notes-logseq':
+            self._handle_notes_logseq_post()
+            return
         
         if self.path.startswith('/api/'):
             self._handle_api_post()
@@ -275,7 +279,7 @@ alias tdel='task delete'
                         photo_name = safe_name
 
             # Write to Logseq journal
-            logseq_block = f'- 🍽️ #FoodDiary {timestamp}: {text}{photo_md}huhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuhhuh\n'
+            logseq_block = f'- 🍽️ #FoodDiary {timestamp}: {text}{photo_md}\n'
             os.makedirs(LOGSEQ_JOURNALS, exist_ok=True)
             journal_file = os.path.join(LOGSEQ_JOURNALS, f'{date_str}.md')
             with open(journal_file, 'a', encoding='utf-8') as f:
@@ -326,6 +330,51 @@ alias tdel='task delete'
             print(f"✗ FOOD DIARY RECENT ERROR: {e}")
             self.send_error(500, f"Server error: {e}")
 
+    def _handle_notes_logseq_post(self):
+        """Handle POST /api/notes-logseq - save note to Logseq journal"""
+        try:
+            from datetime import datetime
+
+            LOGSEQ_JOURNALS = os.path.expanduser('~/Documents/LogSeq/journals')
+
+            content_length = int(self.headers.get('Content-Length', 0))
+            if content_length == 0:
+                self.send_error(400, "No data received")
+                return
+
+            post_data = self.rfile.read(content_length)
+            payload = json.loads(post_data.decode('utf-8'))
+            text = payload.get('notes', '').strip()
+
+            if not text:
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.end_headers()
+                self.wfile.write(json.dumps({'ok': True, 'note': 'empty'}).encode())
+                return
+
+            now = datetime.now()
+            timestamp = now.strftime('%H:%M')
+            date_str = now.strftime('%Y_%m_%d')
+
+            logseq_block = f'- 📝 {timestamp}: {text}\n'
+            os.makedirs(LOGSEQ_JOURNALS, exist_ok=True)
+            journal_file = os.path.join(LOGSEQ_JOURNALS, f'{date_str}.md')
+            with open(journal_file, 'a', encoding='utf-8') as f:
+                f.write(logseq_block)
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'ok': True}).encode())
+            print(f"✓ NOTES: {timestamp} — {text[:60]}")
+
+        except Exception as e:
+            print(f"✗ NOTES ERROR: {e}")
+            self.send_error(500, f"Server error: {e}")
+
     def _handle_api_post(self):
         """Handle POST /api/save-notes and other API endpoints"""
         try:
@@ -367,7 +416,7 @@ if __name__ == "__main__":
     print("=" * 50)
     print("URL:      http://localhost:8000")
     print("Features: Static files + CGI + API")
-    print("API:      /api/data (GET), /api/save-notes (POST), /api/food-diary (POST)")
+    print("API:      /api/data (GET), /api/save-notes (POST), /api/food-diary (POST), /api/notes-logseq (POST)")
     print("CGI:      /cgi-bin/terminal_exec.py, /cgi-bin/save_checkin.py")
     print("=" * 50)
     server.serve_forever()
