@@ -43,10 +43,8 @@
     // Load notes when page loads
     window.addEventListener('DOMContentLoaded', loadNotesFromServer);
 
-    // Initial minimized state check
+    // Initial state check (panel order already applied by panels.js on load)
     window.onload = () => {
-      Object.keys(minimizedPanels).forEach(id => { if(minimizedPanels[id]) minimizePanel(id); });
-      updateMinimizedList();
       // Set day of week in check-in heading
       const dayEl = document.getElementById('checkin-day');
       if (dayEl) {

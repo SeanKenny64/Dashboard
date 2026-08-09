@@ -10,6 +10,7 @@
 
   if (today === submittedDate) {
     document.getElementById('checkin-card').style.display = 'none';
+    if (window.refreshPanelTopButton) window.refreshPanelTopButton();
   }
 })();
 
@@ -55,6 +56,7 @@
         if (data.status === 'ok') {
           localStorage.setItem('checkin-submitted', Date.now().toString());
           document.getElementById('checkin-card').style.display = 'none';
+          if (window.refreshPanelTopButton) window.refreshPanelTopButton();
         } else {
           statusEl.textContent = '⚠ Server error';
         }
