@@ -60,6 +60,17 @@
       applyPanelOrder();
     }
 
+    // Allow other modules to deliberately put a panel at the front of the queue.
+    // The daily check-in uses this at the start of a new day so it always gets
+    // priority, regardless of where the user left the panel rotation yesterday.
+    function bringPanelToTop(id) {
+      if (!panelSequence.includes(id)) return;
+      panelSequence = panelSequence.filter(panelId => panelId !== id);
+      panelSequence.unshift(id);
+      saveSequence();
+      applyPanelOrder();
+    }
+
     // Apply saved order as soon as this script runs, so panels are in the right place before first paint.
     applyPanelOrder();
 
@@ -67,6 +78,7 @@
     // submitted) can trigger a recheck of which panel should show the button,
     // since that can change for reasons outside this rotation logic.
     window.refreshPanelTopButton = updateTopButton;
+    window.bringPanelToTop = bringPanelToTop;
 
     // Every minimize button rotates the current top panel to the back, regardless
     // of which button was physically clicked (only the top one is visible anyway).
