@@ -75,6 +75,22 @@
         submitBtn.disabled = false;
       });
 
+      // "None" completes the current scheduled food-diary slot without
+      // creating a Logseq entry. The scheduling code in panels.js watches
+      // for this signal and moves the card to the bottom of the queue.
+      const noneBtn = document.createElement('button');
+      noneBtn.id = 'food-diary-none';
+      noneBtn.textContent = 'None';
+      noneBtn.style.cssText = 'background:var(--bg); border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:7px 18px; font-size:0.88rem; cursor:pointer;';
+      submitBtn.insertAdjacentElement('afterend', noneBtn);
+
+      noneBtn.addEventListener('click', () => {
+        statusEl.textContent = '✓ Nothing logged';
+        noneBtn.disabled = true;
+        submitBtn.disabled = true;
+        statusEl.dispatchEvent(new Event('food-diary-none'));
+      });
+
       async function loadRecent() {
         try {
           const res  = await fetch('/api/food-diary/recent');
@@ -91,4 +107,3 @@
 
       loadRecent();
     })();
-
