@@ -35,11 +35,103 @@
       });
     }
 
+    /* ---------- PANEL RESIZING (desktop only) ---------- */
+    const PANEL_SIZES_KEY = 'panelSizes';
+    const resizeTargets = new Set(['arena', 'gmail']);
+    let panelSizes = {};
+
+    try {
+      panelSizes = JSON.parse(localStorage.getItem(PANEL_SIZES_KEY) || '{}') || {};
+    } catch (_) {
+      panelSizes = {};
+    }
+
+    function isDesktop() {
+      return window.matchMedia('(min-width: 901px)').matches;
+    }
+
+    function savePanelSizes() {
+      localStorage.setItem(PANEL_SIZES_KEY, JSON.stringify(panelSizes));
+    }
+
+    function applyPanelSize(id) {
+      if (!isDesktop()) return;
+      const card = document.querySelector(`[data-card="${id}"]`);
+      const size = panelSizes[id];
+      if (!card || !size) return;
+
+      card.style.width = `${size.width}px`;
+      card.style.height = `${size.height}px`;
+    }
+
+    function applyAllPanelSizes() {
+      if (!isDesktop()) return;
+      resizeTargets.forEach(applyPanelSize);
+    }
+
+    function addResizeHandle(card) {
+      if (!resizeTargets.has(card.getAttribute('data-card'))) return;
+      if (card.querySelector('.panel-resize-handle')) return;
+
+      card.classList.add('panel-resizable');
+      const handle = document.createElement('div');
+      handle.className = 'panel-resize-handle';
+      handle.setAttribute('aria-label', 'Resize panel');
+      handle.title = 'Drag to resize';
+      card.appendChild(handle);
+
+      handle.addEventListener('pointerdown', event => {
+        if (!isDesktop()) return;
+        event.preventDefault();
+        event.stopPropagation();
+
+        const startX = event.clientX;
+        const startY = event.clientY;
+        const startWidth = card.getBoundingClientRect().width;
+        const startHeight = card.getBoundingClientRect().height;
+        const id = card.getAttribute('data-card');
+
+        card.classList.add('panel-resizing');
+        handle.setPointerCapture?.(event.pointerId);
+
+        const onMove = moveEvent => {
+          const width = Math.max(300, Math.round(startWidth + moveEvent.clientX - startX));
+          const height = Math.max(180, Math.round(startHeight + moveEvent.clientY - startY));
+          card.style.width = `${width}px`;
+          card.style.height = `${height}px`;
+        };
+
+        const onUp = () => {
+          const rect = card.getBoundingClientRect();
+          panelSizes[id] = {
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+          };
+          savePanelSizes();
+          card.classList.remove('panel-resizing');
+          handle.removeEventListener('pointermove', onMove);
+          handle.removeEventListener('pointerup', onUp);
+          handle.removeEventListener('pointercancel', onUp);
+        };
+
+        handle.addEventListener('pointermove', onMove);
+        handle.addEventListener('pointerup', onUp);
+        handle.addEventListener('pointercancel', onUp);
+      });
+    }
+
+    function setupPanelResizing() {
+      if (!isDesktop()) return;
+      document.querySelectorAll('.card[data-card]').forEach(card => addResizeHandle(card));
+      applyAllPanelSizes();
+    }
+
     function applyPanelOrder() {
       panelSequence.forEach((id, index) => {
         const el = document.querySelector(`[data-card="${id}"]`);
         if (el) el.style.order = index;
       });
+      applyAllPanelSizes();
       updateTopButton();
     }
 
@@ -69,6 +161,7 @@
     }
 
     applyPanelOrder();
+    setupPanelResizing();
 
     window.refreshPanelTopButton = updateTopButton;
     window.bringPanelToTop = bringPanelToTop;
@@ -160,8 +253,6 @@
         observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
       }
 
-      // The None button deliberately does not write to the diary. It only
-      // signals that the current scheduled slot has been dealt with.
       window.addEventListener('food-diary-none', completeCurrentSlot);
 
       promptIfNeeded();
