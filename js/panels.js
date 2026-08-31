@@ -54,6 +54,16 @@ function savePanelSizes() {
   localStorage.setItem(PANEL_SIZES_KEY, JSON.stringify(panelSizes));
 }
 
+function resetPanelSize(id) {
+  delete panelSizes[id];
+  const card = document.querySelector(`[data-card="${id}"]`);
+  if (card) {
+    card.style.removeProperty('width');
+    card.style.removeProperty('height');
+  }
+  savePanelSizes();
+}
+
 function applyPanelSize(id) {
   if (!isDesktop()) return;
   const card = document.querySelector(`[data-card="${id}"]`);
@@ -137,6 +147,7 @@ function applyPanelOrder() {
 function rotateTopPanel() {
   const topId = currentTopId();
   if (!topId) return;
+  resetPanelSize(topId);
   panelSequence = panelSequence.filter(id => id !== topId);
   panelSequence.push(topId);
   saveSequence();
