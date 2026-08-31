@@ -37,7 +37,7 @@ function updateTopButton() {
 
 /* ---------- PANEL RESIZING (desktop only) ---------- */
 const PANEL_SIZES_KEY = 'panelSizes';
-const resizeTargets = new Set(['arena', 'gmail']);
+const resizeTargets = new Set(['arena', 'quick-launch', 'gmail', 'notes', 'shopping', 'food-diary', 'rss-feeds']);
 let panelSizes = {};
 
 try {
