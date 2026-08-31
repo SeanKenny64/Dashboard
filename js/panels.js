@@ -10,8 +10,6 @@
 
     let panelSequence = JSON.parse(localStorage.getItem('panelSequence') || 'null') || getDefaultSequence();
 
-    // Reconcile with what's actually on the page, in case cards were added/removed
-    // since this was last saved.
     (function reconcileSequence() {
       const onPage = getDefaultSequence();
       panelSequence = panelSequence.filter(id => onPage.includes(id));
@@ -22,9 +20,6 @@
       localStorage.setItem('panelSequence', JSON.stringify(panelSequence));
     }
 
-    // Some panels (like the daily check-in card) can be hidden by other logic
-    // entirely separate from this rotation — e.g. once you've submitted for the
-    // day. Those shouldn't count as "top" even if they're first in the sequence.
     function isVisible(el) {
       return !!el && el.offsetParent !== null;
     }
@@ -36,9 +31,6 @@
     function updateTopButton() {
       const topId = currentTopId();
       document.querySelectorAll('.minimize-btn').forEach(btn => {
-        // Only the button on the current top (visible) panel is usable — the rest
-        // are hidden, since clicking any panel other than the top one wouldn't
-        // make sense here.
         btn.style.visibility = (btn.getAttribute('data-card') === topId) ? 'visible' : 'hidden';
       });
     }
@@ -53,16 +45,13 @@
 
     function rotateTopPanel() {
       const topId = currentTopId();
-      if (!topId) return; // nothing visible to rotate
+      if (!topId) return;
       panelSequence = panelSequence.filter(id => id !== topId);
       panelSequence.push(topId);
       saveSequence();
       applyPanelOrder();
     }
 
-    // Allow other modules to deliberately put a panel at the front of the queue.
-    // The daily check-in uses this at the start of a new day so it always gets
-    // priority, regardless of where the user left the panel rotation yesterday.
     function bringPanelToTop(id) {
       if (!panelSequence.includes(id)) return;
       panelSequence = panelSequence.filter(panelId => panelId !== id);
@@ -71,8 +60,6 @@
       applyPanelOrder();
     }
 
-    // Put a panel at the very end of the queue. Scheduled panels use this after
-    // they've been completed so the dashboard returns to its normal rotation.
     function bringPanelToBottom(id) {
       if (!panelSequence.includes(id)) return;
       panelSequence = panelSequence.filter(panelId => panelId !== id);
@@ -81,23 +68,17 @@
       applyPanelOrder();
     }
 
-    // Apply saved order as soon as this script runs, so panels are in the right place before first paint.
     applyPanelOrder();
 
-    // Exposed so other scripts can deliberately change panel priority.
     window.refreshPanelTopButton = updateTopButton;
     window.bringPanelToTop = bringPanelToTop;
     window.bringPanelToBottom = bringPanelToBottom;
 
-    // Every minimize button rotates the current top panel to the back, regardless
-    // of which button was physically clicked (only the top one is visible anyway).
     document.querySelectorAll('.minimize-btn').forEach(btn => {
       btn.onclick = () => rotateTopPanel();
     });
 
     /* ---------- SCHEDULED FOOD DIARY ---------- */
-    // Food diary prompts occur three times a day. Once the current prompt is
-    // successfully logged, the card goes back to the bottom of the queue.
     (function scheduleFoodDiary() {
       const FOOD_CARD = 'food-diary';
       const STORAGE_KEY = 'food-diary-completed-slots';
@@ -134,7 +115,6 @@
         const completed = getCompleted();
         completed[slotKey(date, hour)] = true;
 
-        // Keep the localStorage entry small by retaining only recent days.
         const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
         Object.keys(completed).forEach(key => {
           const datePart = key.split('|')[0];
@@ -145,6 +125,14 @@
         });
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+      }
+
+      function completeCurrentSlot() {
+        const now = new Date();
+        const slot = currentSlot(now);
+        if (slot === null || isCompleted(now, slot)) return;
+        markCompleted(now, slot);
+        bringPanelToBottom(FOOD_CARD);
       }
 
       function promptIfNeeded() {
@@ -165,22 +153,19 @@
 
         const observer = new MutationObserver(() => {
           if (statusEl.textContent.trim().startsWith('✓ Logged')) {
-            const now = new Date();
-            const slot = currentSlot(now);
-            if (slot !== null && !isCompleted(now, slot)) {
-              markCompleted(now, slot);
-              bringPanelToBottom(FOOD_CARD);
-            }
+            completeCurrentSlot();
           }
         });
 
         observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
       }
 
+      // The None button deliberately does not write to the diary. It only
+      // signals that the current scheduled slot has been dealt with.
+      window.addEventListener('food-diary-none', completeCurrentSlot);
+
       promptIfNeeded();
       watchForCompletion();
 
-      // Check regularly so an already-open dashboard notices 10:00, 14:00 and
-      // 20:00 without requiring a page refresh.
       setInterval(promptIfNeeded, 30 * 1000);
     })();
