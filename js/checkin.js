@@ -1,15 +1,21 @@
     /* ---------- CHECK-IN ---------- */
 
-    // Hide card if already submitted today
+    // The daily check-in has priority at the start of a new day. Once it has
+    // been submitted, it disappears and the normal panel rotation resumes.
 (function() {
   const submitted = localStorage.getItem('checkin-submitted');
-  if (!submitted) return;
-
   const today = new Date().toDateString();
-  const submittedDate = new Date(parseInt(submitted)).toDateString();
+  const card = document.getElementById('checkin-card');
 
-  if (today === submittedDate) {
-    document.getElementById('checkin-card').style.display = 'none';
+  if (!card) return;
+
+  if (!submitted || new Date(parseInt(submitted)).toDateString() !== today) {
+    // A new day (or no previous submission): make the check-in the first panel.
+    card.style.display = '';
+    if (window.bringPanelToTop) window.bringPanelToTop('daily-checkin');
+  } else {
+    // Already submitted today: keep it hidden.
+    card.style.display = 'none';
     if (window.refreshPanelTopButton) window.refreshPanelTopButton();
   }
 })();
