@@ -71,17 +71,116 @@
       applyPanelOrder();
     }
 
+    // Put a panel at the very end of the queue. Scheduled panels use this after
+    // they've been completed so the dashboard returns to its normal rotation.
+    function bringPanelToBottom(id) {
+      if (!panelSequence.includes(id)) return;
+      panelSequence = panelSequence.filter(panelId => panelId !== id);
+      panelSequence.push(id);
+      saveSequence();
+      applyPanelOrder();
+    }
+
     // Apply saved order as soon as this script runs, so panels are in the right place before first paint.
     applyPanelOrder();
 
-    // Exposed so other scripts (e.g. checkin.js, which hides its own card once
-    // submitted) can trigger a recheck of which panel should show the button,
-    // since that can change for reasons outside this rotation logic.
+    // Exposed so other scripts can deliberately change panel priority.
     window.refreshPanelTopButton = updateTopButton;
     window.bringPanelToTop = bringPanelToTop;
+    window.bringPanelToBottom = bringPanelToBottom;
 
     // Every minimize button rotates the current top panel to the back, regardless
     // of which button was physically clicked (only the top one is visible anyway).
     document.querySelectorAll('.minimize-btn').forEach(btn => {
       btn.onclick = () => rotateTopPanel();
     });
+
+    /* ---------- SCHEDULED FOOD DIARY ---------- */
+    // Food diary prompts occur three times a day. Once the current prompt is
+    // successfully logged, the card goes back to the bottom of the queue.
+    (function scheduleFoodDiary() {
+      const FOOD_CARD = 'food-diary';
+      const STORAGE_KEY = 'food-diary-completed-slots';
+      const SLOTS = [10, 14, 20];
+
+      function dateKey(date) {
+        return date.toDateString();
+      }
+
+      function currentSlot(date = new Date()) {
+        const hour = date.getHours();
+        let slot = null;
+        SLOTS.forEach(h => { if (hour >= h) slot = h; });
+        return slot;
+      }
+
+      function slotKey(date, hour) {
+        return `${dateKey(date)}|${hour}`;
+      }
+
+      function getCompleted() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function isCompleted(date, hour) {
+        return !!getCompleted()[slotKey(date, hour)];
+      }
+
+      function markCompleted(date, hour) {
+        const completed = getCompleted();
+        completed[slotKey(date, hour)] = true;
+
+        // Keep the localStorage entry small by retaining only recent days.
+        const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        Object.keys(completed).forEach(key => {
+          const datePart = key.split('|')[0];
+          const parsed = new Date(datePart);
+          if (!Number.isNaN(parsed.getTime()) && parsed.getTime() < cutoff) {
+            delete completed[key];
+          }
+        });
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+      }
+
+      function promptIfNeeded() {
+        const card = document.querySelector(`[data-card="${FOOD_CARD}"]`);
+        if (!card) return;
+
+        const now = new Date();
+        const slot = currentSlot(now);
+        if (slot === null || isCompleted(now, slot)) return;
+
+        card.style.display = '';
+        bringPanelToTop(FOOD_CARD);
+      }
+
+      function watchForCompletion() {
+        const statusEl = document.getElementById('food-diary-status');
+        if (!statusEl) return;
+
+        const observer = new MutationObserver(() => {
+          if (statusEl.textContent.trim().startsWith('✓ Logged')) {
+            const now = new Date();
+            const slot = currentSlot(now);
+            if (slot !== null && !isCompleted(now, slot)) {
+              markCompleted(now, slot);
+              bringPanelToBottom(FOOD_CARD);
+            }
+          }
+        });
+
+        observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
+      }
+
+      promptIfNeeded();
+      watchForCompletion();
+
+      // Check regularly so an already-open dashboard notices 10:00, 14:00 and
+      // 20:00 without requiring a page refresh.
+      setInterval(promptIfNeeded, 30 * 1000);
+    })();
