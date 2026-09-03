@@ -29,9 +29,8 @@ function currentTopId() {
 }
 
 function updateTopButton() {
-  const topId = currentTopId();
   document.querySelectorAll('.minimize-btn').forEach(btn => {
-    btn.style.visibility = (btn.getAttribute('data-card') === topId) ? 'visible' : 'hidden';
+    btn.style.visibility = 'visible';
   });
 }
 
@@ -144,12 +143,14 @@ function applyPanelOrder() {
   updateTopButton();
 }
 
-function rotateTopPanel() {
-  const topId = currentTopId();
-  if (!topId) return;
-  resetPanelSize(topId);
-  panelSequence = panelSequence.filter(id => id !== topId);
-  panelSequence.push(topId);
+/* ---------- MOVE A SPECIFIC PANEL TO THE BOTTOM ---------- */
+
+function rotateTopPanel(id) {
+  if (!id || !panelSequence.includes(id)) return;
+
+  panelSequence = panelSequence.filter(panelId => panelId !== id);
+  panelSequence.push(id);
+
   saveSequence();
   applyPanelOrder();
 }
@@ -170,15 +171,30 @@ function bringPanelToBottom(id) {
   applyPanelOrder();
 }
 
+/* ---------- RESET PANEL ORDER ---------- */
+
+function resetPanelOrder() {
+  panelSequence = getDefaultSequence();
+  saveSequence();
+  applyPanelOrder();
+}
+
 applyPanelOrder();
 setupPanelResizing();
 
 window.refreshPanelTopButton = updateTopButton;
 window.bringPanelToTop = bringPanelToTop;
 window.bringPanelToBottom = bringPanelToBottom;
+window.resetPanelOrder = resetPanelOrder;
+
+/* ---------- PANEL × BUTTONS ---------- */
 
 document.querySelectorAll('.minimize-btn').forEach(btn => {
-  btn.onclick = () => rotateTopPanel();
+  btn.onclick = event => {
+    event.stopPropagation();
+    const id = btn.getAttribute('data-card');
+    rotateTopPanel(id);
+  };
 });
 
 /* ---------- SCHEDULED FOOD DIARY ---------- */

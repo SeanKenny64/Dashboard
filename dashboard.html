@@ -10,11 +10,12 @@
 <body>
   <header>
     <button id="timerBtn" class="toggle" style="margin-left: 10px; padding: 10px 16px; font-size: 14px;">⏲ Set Timer</button>
-    <div class="spacer"></div>
+    <button id="reset-panel-order" title="Reset panels to their original order">↺ Reset</button><div class="spacer"></div>
     <div id="weather" style="margin-right: 16px; font-size: 20px; font-weight: 600;"><a href="https://www.bbc.co.uk/weather/2654675" target="_blank" style="color: inherit; text-decoration: none;"><span id="weather-icon"></span> <span id="weather-temp">--°C</span></a></div>
     <div><div class="clock" id="clock">--:--</div><div class="date" id="date">---</div></div>
   </header>
   <main>
+    
     <section class="card" data-card="daily-checkin" id="checkin-card">
       <h2>Daily Check-in <span id="checkin-day" style="font-size:0.8em;font-weight:400;color:var(--muted);margin-left:0.4em;"></span> <button class="minimize-btn" data-card="daily-checkin"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2>
       <div class="checkin-group"><div class="checkin-label">🍺 Drink</div><div class="checkin-options" data-group="drink"><button class="ci-btn" data-value="0">None</button><button class="ci-btn" data-value="1-2">1–2</button><button class="ci-btn" data-value="3-6">3–6</button><button class="ci-btn" data-value="6+">6+</button></div></div>
@@ -32,5 +33,10 @@
     <section class="card" data-card="rss-feeds" style="flex:1 0 calc(33.333% - 10px);max-width:calc(33.333% - 10px);"><h2>📰 RSS Feeds <button class="minimize-btn" data-card="rss-feeds"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></h2><div id="rss-feed-container" style="max-height:300px;overflow-y:auto;font-size:0.9rem;line-height:1.4;"><p style="color:var(--muted);">Loading feeds...</p></div></section>
   </main>
   <script src="js/search.js"></script><script src="js/terminal.js"></script><script src="js/panels.js"></script><script src="js/tiles.js"></script><script src="js/gmail.js"></script><script src="js/weather.js"></script><script src="js/notes.js"></script><script src="js/timer.js"></script><script src="js/checkin.js"></script><script src="js/shopping.js"></script><script src="js/rss.js"></script><script src="js/food-diary.js"></script>
+  <script>
+  document.getElementById('reset-panel-order')?.addEventListener('click', () => {
+    window.resetPanelOrder?.();
+  });
+</script>
 </body>
 </html>
