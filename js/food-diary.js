@@ -42,7 +42,7 @@
     }
 
     submitBtn.disabled = true;
-    if (noneBtn) noneBtn.disabled = true;
+    noneBtn.disabled = true;
     if (statusEl) statusEl.textContent = 'Saving...';
 
     try {
@@ -70,7 +70,11 @@
     }
   });
 
+  noneBtn.type = 'button';
   noneBtn.addEventListener('click', () => {
+    // None is a completion action for the current scheduled slot.
+    // It deliberately does not write anything to the food diary.
+    noneBtn.disabled = true;
     if (statusEl) statusEl.textContent = 'Skipped';
     window.dispatchEvent(new CustomEvent('food-diary-none'));
   });
