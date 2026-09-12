@@ -3,66 +3,87 @@ import datetime
 import imaplib
 import json
 import os
-import urllib.request
-from icalendar import Calendar
-import recurring_ical_events
+import sys
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
+
+# --- Google API Imports ---
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
 
 # 1. Load the hidden environment variables
 load_dotenv("/home/sean/Projects/dashboard/.env")
 
-# 2. Get credentials from .env (no longer hardcoded for security)
+# 2. Get credentials from .env
 GMAIL_USER = os.getenv("GMAIL_USER")
 GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
-GCAL_ICAL_URL = os.getenv("GCAL_ICAL_URL", "").strip()
-GCAL_MAX_EVENTS = int(os.getenv("GCAL_MAX_EVENTS", "4"))
+# Path to the JSON key (same folder as this script)
+GOOGLE_CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "google_credentials.json")
+# Use 'primary' if you shared the calendar with the service account, or the specific calendar ID
+CALENDAR_ID = os.getenv("CALENDAR_ID", "primary") 
 
 def get_unread():
     try:
-        # 3. Connect and Login
         mail = imaplib.IMAP4_SSL('imap.gmail.com')
         mail.login(GMAIL_USER, GMAIL_PASSWORD)
-        
-        # 4. Check the inbox for unread messages
         mail.select("inbox")
         status, response = mail.search(None, 'UNSEEN')
-        
-        # 5. Count the messages
         count = len(response[0].split())
         mail.logout()
         return {"count": count}
     except Exception as e:
         return {"error": str(e)}
 
-
 def get_calendar_events():
-    if not GCAL_ICAL_URL:
-        return []
-
     try:
-        with urllib.request.urlopen(GCAL_ICAL_URL, timeout=5) as response:
-            ics_data = response.read()
+        # --- Setup the API connection ---
+        SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+        creds = service_account.Credentials.from_service_account_file(
+            GOOGLE_CREDENTIALS_FILE, scopes=SCOPES)
+        service = build('calendar', 'v3', credentials=creds)
 
-        cal = Calendar.from_ical(ics_data)
-        now = datetime.datetime.now(datetime.timezone.utc)
+        # --- Set your local timezone ---
+        local_tz = ZoneInfo("Europe/London")
+
+        # --- Get the time window (Now to +7 days) ---
+        now = datetime.datetime.now(local_tz)
         window_end = now + datetime.timedelta(days=7)
 
-        occurrences = recurring_ical_events.of(cal).between(now, window_end)
+        # Format for API (must be UTC)
+        time_min = now.astimezone(datetime.timezone.utc).isoformat()
+        time_max = window_end.astimezone(datetime.timezone.utc).isoformat()
 
+        # --- Call the API ---
+        events_result = service.events().list(
+            calendarId=CALENDAR_ID,
+            timeMin=time_min,
+            timeMax=time_max,
+            singleEvents=True,  # Ensures recurring events are expanded
+            orderBy='startTime'
+        ).execute()
+        
+        events_data = events_result.get('items', [])
+
+        # --- Process the clean API data ---
         events = []
-        for component in occurrences:
-            title = str(component.get("SUMMARY", "(No title)"))
-            dtstart = component.get("DTSTART").dt
-
-            # Handle date vs datetime
-            if isinstance(dtstart, datetime.date) and not isinstance(dtstart, datetime.datetime):
-                start_dt = datetime.datetime.combine(dtstart, datetime.time.min, tzinfo=datetime.timezone.utc)
-                all_day = True
-            else:
-                if dtstart.tzinfo is None:
-                    dtstart = dtstart.replace(tzinfo=datetime.timezone.utc)
-                start_dt = dtstart
+        for event in events_data:
+            title = event.get('summary', '(No title)')
+            
+            # The API provides a 'date' for all-day events and 'dateTime' for timed events
+            start = event['start']
+            if 'dateTime' in start:
+                # Timed event
+                start_dt = datetime.datetime.fromisoformat(start['dateTime'].replace('Z', '+00:00'))
+                start_dt = start_dt.astimezone(local_tz)
                 all_day = False
+            else:
+                # All-day event (just a date string)
+                start_dt = datetime.datetime.combine(
+                    datetime.date.fromisoformat(start['date']), 
+                    datetime.time.min, 
+                    tzinfo=local_tz
+                )
+                all_day = True
 
             events.append({
                 "title": title,
@@ -73,7 +94,8 @@ def get_calendar_events():
         events.sort(key=lambda x: x["start"])
         return events
 
-    except Exception:
+    except Exception as e:
+        print(f"Calendar error: {e}", file=sys.stderr)
         return []
 
 
