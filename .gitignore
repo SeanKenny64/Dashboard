@@ -6,4 +6,7 @@ __pycache__/
 *.backup
 dashboard_backup.html
 notes_sync_code.txt
-data/
+
+# Google credentials
+cgi-bin/google_credentials.json
+*google_credentials*.json

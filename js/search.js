@@ -13,8 +13,7 @@
         if (opt.value === currentEngineUrl) { opt.selected = true; break; }
       }
       // Update visible button
-      document.getElementById('engine-icon').src = el.querySelector('img').src;
-      document.getElementById('engine-label').textContent = el.textContent.trim();
+      document.getElementById('engine-icon').src = `https://www.google.com/s2/favicons?domain=${el.dataset.domain}&sz=32`;      document.getElementById('engine-label').textContent = el.textContent.trim();
       // Mark active
       document.querySelectorAll('.engine-option').forEach(o => o.classList.remove('active'));
       el.classList.add('active');
