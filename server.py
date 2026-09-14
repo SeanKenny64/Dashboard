@@ -74,7 +74,7 @@ alias tdel='task delete'
             self._handle_weather()
             return
 
-        if self.path == '/api/food-diary/recent':
+        if self.path == '/api/food-diary/recent' or self.path.startswith('/api/food-diary/recent?'):
             self._handle_food_diary_recent()
             return
         
@@ -314,18 +314,30 @@ alias tdel='task delete'
             self.send_error(500, f"Server error: {e}")
 
     def _handle_food_diary_recent(self):
-        """Handle GET /api/food-diary/recent - return recent food diary entries"""
+        """Handle GET /api/food-diary/recent - return entries from the last 3 days"""
         try:
+            from datetime import datetime, timedelta
             FOOD_LOG = os.path.expanduser('~/Documents/LogSeq/assets/food_diary_log.json')
             log = []
             if os.path.exists(FOOD_LOG):
                 with open(FOOD_LOG, 'r') as f:
                     log = json.load(f)
+
+            cutoff = datetime.now() - timedelta(days=3)
+            recent = []
+            for entry in log:
+                try:
+                    entry_dt = datetime.strptime(entry['time'], '%d %b %H:%M').replace(year=datetime.now().year)
+                    if entry_dt >= cutoff:
+                        recent.append(entry)
+                except Exception:
+                    continue
+
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
-            self.wfile.write(json.dumps({'entries': log[:10]}).encode())
+            self.wfile.write(json.dumps({'entries': recent}).encode())
         except Exception as e:
             print(f"✗ FOOD DIARY RECENT ERROR: {e}")
             self.send_error(500, f"Server error: {e}")
