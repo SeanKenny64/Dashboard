@@ -26,7 +26,16 @@ class HybridHandler(CGIHTTPRequestHandler):
             
             if cmd_name not in self.ALLOWED_COMMANDS:
                 return {"error": f"Command '{cmd_name}' not allowed. Allowed: {', '.join(self.ALLOWED_COMMANDS)}"}
-            
+            # Dashboard-specific behaviour:
+            # If 'ta' (task add) has no TaskWarrior tag, add +inbox.
+            # This only affects commands entered through the Dashboard;
+            # it does not change the normal shell 'ta' alias.
+            if cmd_name == 'ta' and not any(
+                word.startswith('+') and len(word) > 1
+                for word in parts[1:]
+            ):
+                command += ' +inbox'
+
             aliases = """
 shopt -s expand_aliases
 alias tm='task modify'
@@ -35,8 +44,7 @@ alias td='task done'
 alias t='task'
 alias tdel='task delete'
 """
-            full_command = f'{aliases}\n{command} rc.confirmation=no'
-            
+            full_command = f'{aliases}\n{command} rc.confirmation=no'            
             result = subprocess.run(
                 full_command,
                 shell=True,
