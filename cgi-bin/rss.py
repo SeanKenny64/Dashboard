@@ -6,12 +6,12 @@ import sys
 
 # Add your RSS URLs here
 FEEDS = [
-    "https://hnrss.org/frontpage", # Hacker News
-    "https://www.theregister.com/security/headlines.atom",
-    "https://feeds.bbci.co.uk/news/technology/rss.xml"
+    ("https://hnrss.org/frontpage", "Hacker News"),
+    ("https://www.theregister.com/security/headlines.atom", "Register"),
+    ("https://feeds.bbci.co.uk/news/technology/rss.xml", "BBC")
 ]
 
-def fetch_feed(url):
+def fetch_feed(url, source):
     try:
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -24,7 +24,7 @@ def fetch_feed(url):
         for item in root.findall('.//item')[:5]:
             title = item.findtext('title') or 'No title'
             link = item.findtext('link') or '#'
-            items.append({'title': title, 'link': link})
+            items.append({'title': title, 'link': link, 'source': source})
             
         # Handle Atom feeds
         if not items:
@@ -33,8 +33,7 @@ def fetch_feed(url):
                 title = entry.findtext('a:title', namespaces=ns) or 'No title'
                 link_el = entry.find('a:link', namespaces=ns)
                 link = link_el.get('href') if link_el is not None else '#'
-                items.append({'title': title, 'link': link})
-                
+                items.append({'title': title, 'link': link, 'source': source})                      
         return items
     except Exception as e:
         return [{'title': f'Error loading {url}', 'link': '#'}]
@@ -42,8 +41,8 @@ def fetch_feed(url):
 def main():
     print("Content-Type: application/json\n")
     all_items = []
-    for url in FEEDS:
-        all_items.extend(fetch_feed(url))
+    for url, source in FEEDS:
+        all_items.extend(fetch_feed(url, source))
     
     # Sort or just print them
     print(json.dumps(all_items))

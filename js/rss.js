@@ -14,10 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
             data.forEach(item => {
                 html += `
                     <li style="margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border);">
-                        <a href="${item.link}" target="_blank" style="color: var(--text); text-decoration: none;">${item.title}</a>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <a href="${item.link}" target="_blank"
+                            style="color: var(--text); text-decoration: none; flex: 1;">
+                                ${item.title}
+                            </a>
+                            <span style="background: #8ecae6; color: white; font-weight: bold;
+                                        font-size: 0.7em; padding: 3px 7px; border-radius: 4px;
+                                        white-space: nowrap;">
+                                ${item.source || 'Unknown'}
+                            </span>
+                        </div>
                     </li>
-                `;
-            });
+                `;         
+               });
             html += '</ul>';
             container.innerHTML = html;
         })
