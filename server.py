@@ -85,6 +85,11 @@ alias tdel='task delete'
         if self.path == '/api/food-diary/recent' or self.path.startswith('/api/food-diary/recent?'):
             self._handle_food_diary_recent()
             return
+
+        if self.path.startswith('/api/finance/'):
+            from api.finance import handle_finance_get
+            handle_finance_get(self)
+            return
         
         super().do_GET()
     
@@ -105,9 +110,16 @@ alias tdel='task delete'
             self._handle_notes_logseq_post()
             return
         
+        if self.path.startswith('/api/finance/'):
+            from api.finance import handle_finance_post
+            handle_finance_post(self)
+            return
+        
         if self.path.startswith('/api/'):
             self._handle_api_post()
             return
+
+        
         
         super().do_POST()
     
